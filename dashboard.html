@@ -16,245 +16,166 @@
 
 <body class="dashboard-page">
 
+    <!-- Mobile Header (Visible on Mobile Only) -->
+    <div class="mobile-dashboard-header">
+        <div class="mobile-logo">
+            <img src="assets/logo.png" alt="ZCP">
+            <span class="zcp-text">ZCP</span>
+        </div>
+        <button id="sidebarToggle" class="menu-btn">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+
     <!-- Sidebar Navigation -->
-    <aside class='sidebar glass-card' style='background: rgba(8, 13, 26, 0.98); border-right: 1px solid rgba(245, 158, 11, 0.15); box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5); padding: 3rem 1.5rem; backdrop-filter: blur(30px); position: fixed; height: 100vh; width: 330px; z-index: 1000;'>
-        <div class='sidebar-header' style='margin-bottom: 5rem;'>
-            <a href='index.html' class='logo-zcp' style='display: flex; flex-direction: column; gap: 0.5rem;'>
-                <img src='assets/logo.png' alt='ZCP Logo' class='logo-img' style='height: 52px; width: auto; object-fit: contain; margin-bottom: 1.5rem;'>
-                <div class='zcp-text-group'>
-                    <span class='zcp-main-text' style='font-family: "DM Sans", sans-serif; font-size: 2.5rem; font-weight: 700; line-height: 0.8; letter-spacing: -1px; color: #F1F5F9;'>ZALMI <br> <span style='color: #F59E0B;'>CAREER</span> POINT</span>
+    <aside class="sidebar glass-card" id="mainSidebar">
+        <div class="sidebar-header">
+            <a href="index.html" class="logo-zcp">
+                <img src="assets/logo.png" alt="ZCP Logo" class="logo-img">
+                <div class="zcp-text-group">
+                    <span class="zcp-main-text">ZALMI</span>
+                    <span class="zcp-sub-text">CAREER POINT</span>
                 </div>
             </a>
         </div>
-        <nav class='sidebar-nav'>
-            <ul style='display: flex; flex-direction: column; gap: 1rem;'>
-                <li class='active' style='list-style: none;'><a href='#' data-section='overview' style='display: flex; align-items: center; gap: 1.5rem; padding: 1.2rem 2rem; border-radius: 14px; font-weight: 700; background: rgba(245, 158, 11, 0.08); color: #F59E0B; text-decoration: none; border-left: 4px solid #F59E0B; transition: 0.3s;'><i class='fas fa-th-large'></i> Overview</a></li>
-                <li style='list-style: none;'><a href='#' data-section='courses' style='display: flex; align-items: center; gap: 1.5rem; padding: 1.2rem 2rem; border-radius: 14px; font-weight: 700; color: #475569; text-decoration: none; transition: 0.3s;'><i class='fas fa-graduation-cap'></i> My Courses</a></li>
-                <li style='list-style: none;'><a href='#' data-section='assignments' style='display: flex; align-items: center; gap: 1.5rem; padding: 1.2rem 2rem; border-radius: 14px; font-weight: 700; color: #475569; text-decoration: none; transition: 0.3s;'><i class='fas fa-tasks'></i> Assignments</a></li>
-                <li style='list-style: none;'><a href='admin.html' id='admin-portal-tab' style='display: none; align-items: center; gap: 1.5rem; padding: 1.2rem 2rem; border-radius: 14px; font-weight: 700; color: var(--amber); text-decoration: none; border: 1px solid rgba(245,158,11,0.3); background: rgba(245,158,11,0.05); transition: 0.3s;'><i class='fas fa-user-shield'></i> Admin Console</a></li>
+        <nav class="sidebar-nav">
+            <ul>
+                <li class="nav-item active">
+                    <a href="#" data-section="overview">
+                        <i class="fas fa-th-large"></i> <span>Overview</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" data-section="courses">
+                        <i class="fas fa-graduation-cap"></i> <span>My Courses</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" data-section="assignments">
+                        <i class="fas fa-tasks"></i> <span>Assignments</span>
+                    </a>
+                </li>
+                <li class="nav-item admin-only" id="admin-portal-tab" style="display: none;">
+                    <a href="admin.html">
+                        <i class="fas fa-user-shield"></i> <span>Admin Console</span>
+                    </a>
+                </li>
             </ul>
         </nav>
-        <div class='sidebar-footer' style='position: absolute; bottom: 3rem; left: 1.5rem; right: 1.5rem;'>
-            <button id='logoutBtn' class='btn btn-glass btn-block' style='padding: 1.2rem; font-weight: 700; background: rgba(255, 255, 255, 0.03); color: #64748B; border-radius: 14px; transition: 0.3s;'>LOGOUT <i class='fas fa-sign-out-alt'></i></button>
+        <div class="sidebar-footer">
+            <button id="logoutBtn" class="btn btn-logout-sidebar">
+                <span>LOGOUT</span> <i class="fas fa-sign-out-alt"></i>
+            </button>
         </div>
     </aside>
 
-    <!-- Main Content -->
-    <main class="dashboard-content">
-        <header class="dashboard-header">
-            <div class="welcome-msg">
+    <!-- Main Content Area -->
+    <main class="dashboard-main">
+        <!-- Dashboard Top Header -->
+        <header class="dashboard-header-premium">
+            <div class="header-left">
                 <h2>Welcome, <span id="userName" class="text-gradient">Student</span>!</h2>
-                <p>Track your progress and access your lessons.</p>
+                <p>Welcome back to your educational journey.</p>
             </div>
-            <div class="user-profile">
-                <div class="user-info">
-                    <strong id="displayFullName">John Doe</strong>
-                    <span id="userRoll">Roll #ZCP-2026-001</span>
+            <div class="header-right">
+                <div class="user-meta">
+                    <strong id="displayFullName">Loading User...</strong>
+                    <span id="userRoll">Roll #ZCP-2026-***</span>
                 </div>
-                <div class="user-avatar">
+                <div class="user-avatar-circle">
                     <i class="fas fa-user-graduate"></i>
                 </div>
             </div>
         </header>
 
-        <!-- Overview Section -->
-        <div id='overview-section' class='dash-section active'>
-            <!-- Dashboard Stats -->
-            <section class='dash-grid stats-grid' style='display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-bottom: 4rem;'>
-                <div class='stat-card glass-card' style='padding: 3rem; background: rgba(245, 158, 11, 0.03); border: 1px solid rgba(245, 158, 11, 0.1); border-radius: 20px;'>
-                    <span style='text-transform: uppercase; letter-spacing: 2px; font-weight: 700; color: #F59E0B; font-size: 0.8rem; display: block; margin-bottom: 1rem;'>ACTIVE PROGRAMS</span>
-                    <h3 id='totalCourses' style='font-family: "DM Sans", sans-serif; font-size: 4.5rem; font-weight: 700; line-height: 1; margin: 0; color: #F1F5F9;'>0</h3>
+        <!-- Dynamic Content Sections -->
+        <div id="overview-section" class="dash-section active">
+            <!-- Stats Grid -->
+            <section class="stat-summary-grid">
+                <div class="premium-stat-card glass-card gold-border">
+                    <div class="stat-content">
+                        <span class="stat-label">Programs Enrolled</span>
+                        <h3 id="totalCourses">0</h3>
+                    </div>
+                    <div class="stat-icon-wrapper"><i class="fas fa-book-open"></i></div>
                 </div>
-                <div class='stat-card glass-card' style='padding: 3rem; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.03); border-radius: 20px;'>
-                    <span style='text-transform: uppercase; letter-spacing: 2px; font-weight: 700; color: #475569; font-size: 0.8rem; display: block; margin-bottom: 1rem;'>COMPLETED</span>
-                    <h3 id='totalLessons' style='font-family: "DM Sans", sans-serif; font-size: 4.5rem; font-weight: 700; line-height: 1; margin: 0; color: #F1F5F9;'>0</h3>
+                <div class="premium-stat-card glass-card">
+                    <div class="stat-content">
+                        <span class="stat-label">Milestones</span>
+                        <h3 id="totalLessons">0</h3>
+                        <p class="stat-extra">Sessions Attended</p>
+                    </div>
                 </div>
-                <div class='stat-card glass-card' style='padding: 3rem; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.03); border-radius: 20px;'>
-                    <span style='text-transform: uppercase; letter-spacing: 2px; font-weight: 700; color: #475569; font-size: 0.8rem; display: block; margin-bottom: 1rem;'>PERFORMANCE</span>
-                    <h3 id='avgScore' style='font-family: "DM Sans", sans-serif; font-size: 4.5rem; font-weight: 700; line-height: 1; margin: 0; color: #F1F5F9;'>0%</h3>
-                </div>
-            </section>
-
-            <!-- Enrolled Courses Preview -->
-            <section class='dashboard-section'>
-                <div class='section-flex' style='display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2.5rem;'>
-                    <h3 class='section-title' style='font-family: "DM Sans", sans-serif; font-size: 2rem; text-transform: uppercase; letter-spacing: -1px;'>Current Courses</h3>
-                    <a href='#' class='view-all' data-go-to='courses' style='color: #F59E0B; font-weight: 700; text-decoration: none; font-size: 0.9rem; letter-spacing: 1px;'>VIEW ALL <i class='fas fa-arrow-right'></i></a>
-                </div>
-                <div id='coursesContainer' class='dash-grid courses-grid'>
-                    <!-- Dynamic Course Cards -->
-                </div>
-            </section>
-        </div>
-                <div class="stat-card glass-card" style="padding: 2.5rem; text-align: left;">
-                    <span class="stat-label" style="text-transform: uppercase; letter-spacing: 2px; font-weight: 700; color: var(--accent-primary); font-size: 0.75rem; display: block; margin-bottom: 0.5rem;">Completed</span>
-                    <h3 id="totalLessons" style="font-size: 3.5rem; font-weight: 700; line-height: 1; margin: 0;">0</h3>
-                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem; font-weight: 600;">Milestones Achieved</p>
-                </div>
-                <div class="stat-card glass-card" style="padding: 2.5rem; text-align: left;">
-                    <span class="stat-label" style="text-transform: uppercase; letter-spacing: 2px; font-weight: 700; color: var(--accent-primary); font-size: 0.75rem; display: block; margin-bottom: 0.5rem;">Performance</span>
-                    <h3 id="avgScore" style="font-size: 3.5rem; font-weight: 700; line-height: 1; margin: 0;">0%</h3>
-                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem; font-weight: 600;">Average Grade</p>
-                </div>
-            </section>
-
-            <!-- Enrolled Courses Preview -->
-            <section class="dashboard-section">
-                <div class="section-flex">
-                    <h3 class="section-title">My Courses</h3>
-                    <a href="#" class="view-all" data-go-to="courses">View All</a>
-                </div>
-                <div id="coursesContainer" class="dash-grid courses-grid">
-                    <!-- Dynamic Course Cards will be injected here -->
-                    <div class="no-courses-msg"
-                        style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-secondary);">
-                        <i class="fas fa-book-open" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
-                        <p>You haven't enrolled in any courses yet.</p>
-                        <a href="index.html#courses" class="btn btn-primary btn-sm" style="margin-top: 1rem;">Explore
-                            Courses</a>
+                <div class="premium-stat-card glass-card">
+                    <div class="stat-content">
+                        <span class="stat-label">Performance</span>
+                        <h3 id="avgScore">0%</h3>
+                        <p class="stat-extra">Overall Grade</p>
                     </div>
                 </div>
             </section>
 
-            <!-- Upcoming Live Class Preview -->
-            <section class="dashboard-section">
-                <h3 class="section-title">Upcoming Live Class</h3>
-                <div class="live-class-card glass-card premium-card">
-                    <div class="live-info">
-                        <div class="live-badge">Live at 8:00 PM</div>
-                        <h4>Module 4: AI Enhanced Video Editing</h4>
-                        <p><i class="fas fa-user-tie"></i> Hosted by Shaheer</p>
+            <!-- Dashboard Sections Grid -->
+            <div class="dashboard-grid-layout">
+                <!-- Courses Preview -->
+                <section class="dash-block">
+                    <div class="block-header">
+                        <h3>My Current Programs</h3>
+                        <a href="#" class="accent-link" data-go-to="courses">View All <i class="fas fa-arrow-right"></i></a>
                     </div>
-                    <div class="live-action">
-                        <a href="#" class="btn btn-primary btn-glow">Join Zoom Meeting <i class="fas fa-video"></i></a>
+                    <div id="coursesContainer" class="dashboard-courses-list">
+                        <!-- Dynamic Course Cards -->
+                        <div class="loading-state">
+                            <i class="fas fa-circle-notch fa-spin"></i>
+                            <p>Initializing your dashboard...</p>
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
+
+                <!-- Live Sessions -->
+                <section class="dash-block">
+                    <div class="block-header">
+                        <h3>Upcoming Live Session</h3>
+                    </div>
+                    <div class="live-event-card glass-card">
+                        <div class="live-badge">Live Today</div>
+                        <h4>Module 4: AI Mastery & Creative Tools</h4>
+                        <div class="session-meta">
+                            <span class="host"><i class="fas fa-chalkboard-teacher"></i> Shaheer</span>
+                            <span class="time"><i class="fas fa-clock"></i> 8:00 PM (PKT)</span>
+                        </div>
+                        <a href="#" class="btn btn-primary btn-block btn-join">Join Live Training <i class="fas fa-video"></i></a>
+                    </div>
+                </section>
+            </div>
         </div>
 
-        <!-- Courses Section -->
+        <!-- Courses Full View -->
         <div id="courses-section" class="dash-section">
-            <h3 class="section-title" style="margin-bottom: 2rem;">All Enrolled Programs</h3>
-            <div id="fullCoursesContainer" class="dash-grid courses-grid">
-                <!-- Detailed course list here -->
+            <h3 class="section-heading">Your Educational Curriculum</h3>
+            <div id="fullCoursesContainer" class="full-courses-grid">
+                <!-- Detailed courses list populated by script -->
             </div>
         </div>
 
         <!-- Assignments Section -->
         <div id="assignments-section" class="dash-section">
-            <h3 class="section-title" style="margin-bottom: 2rem;">Recent Assignments</h3>
-            <div class="glass-card" style="padding: 3rem; text-align: center;">
-                <i class="fas fa-tasks" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
-                <p style="color: var(--text-secondary);">No assignments due at this time. Stay tuned for updates!</p>
+            <h3 class="section-heading">Assignments & Assessments</h3>
+            <div class="empty-placeholder-card glass-card">
+                <i class="fas fa-inbox"></i>
+                <p>No pending assignments found. Check back soon!</p>
             </div>
-        </div>
-
-        <!-- Live Classes Section -->
-        <div id="live-section" class="dash-section">
-            <h3 class="section-title" style="margin-bottom: 2rem;">Live Training Sessions</h3>
-            <div class="live-class-card glass-card premium-card" style="margin-bottom: 2rem;">
-                <!-- Full live class list -->
-            </div>
-            <div class="glass-card" style="padding: 2rem;">
-                <h4>Next Live Session: Content Strategy</h4>
-                <p style="color: var(--text-secondary); margin: 0.5rem 0 1.5rem;">Friday, 27th March • 8:00 PM (PKT)</p>
-                <div class="timer-grid" style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                    <!-- Countdown timer placeholder -->
-                </div>
-                <button class="btn btn-glass btn-sm" disabled>Class Not Started</button>
-            </div>
-        </div>
-
-        <!-- Settings Section -->
-        <div id="settings-section" class="dash-section">
-            <h3 class="section-title" style="margin-bottom: 2rem;">Portal Settings</h3>
-            <div class="settings-grid" style="display: grid; gap: 2rem;">
-                <div class="glass-card" style="padding: 2rem;">
-                    <h4 style="margin-bottom: 1.5rem;"><i class="fas fa-user-circle"></i> Profile Information</h4>
-                    <form id="profileUpdateForm" style="display: grid; gap: 1rem;">
-                        <input type="text" class="btn-glass" placeholder="Your Full Name"
-                            style="padding: 0.8rem; text-align: left;">
-                        <input type="tel" class="btn-glass" placeholder="WhatsApp Number"
-                            style="padding: 0.8rem; text-align: left;">
-                        <button type="submit" class="btn btn-primary btn-sm" style="width: max-content;">Save
-                            Changes</button>
-                    </form>
-                </div>
-                <div class="glass-card" style="padding: 2rem;">
-                    <h4 style="margin-bottom: 1.5rem;"><i class="fas fa-lock"></i> Security</h4>
-                    <button class="btn btn-glass btn-sm">Reset Password</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Admin Section -->
-        <div id="admin-section" class="dash-section">
-
-            <!-- Admin Stats Row -->
-            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; margin-bottom:2.5rem;">
-                <div class="glass-card" style="padding:2rem; border-radius:16px; border:1px solid var(--border-amber);">
-                    <div style="font-size:0.72rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--amber); margin-bottom:0.75rem;">Total Enrollments</div>
-                    <div id="adminTotalStudents" style="font-size:3rem; font-weight:700; color:var(--text-primary); line-height:1;">0</div>
-                </div>
-                <div class="glass-card" style="padding:2rem; border-radius:16px; border:1px solid var(--border);">
-                    <div style="font-size:0.72rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.75rem;">Pending Verification</div>
-                    <div style="font-size:3rem; font-weight:700; color:var(--text-primary); line-height:1;" id="adminPending">—</div>
-                </div>
-                <div class="glass-card" style="padding:2rem; border-radius:16px; border:1px solid var(--border);">
-                    <div style="font-size:0.72rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.75rem;">Active Students</div>
-                    <div style="font-size:3rem; font-weight:700; color:#4ade80; line-height:1;" id="adminActive">—</div>
-                </div>
-            </div>
-
-            <!-- Header + Export -->
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                <div>
-                    <div style="font-size:0.72rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--amber); margin-bottom:0.25rem;">Admin Console</div>
-                    <h3 style="font-size:1.4rem; font-weight:700; color:var(--text-primary); letter-spacing:-0.02em;">All Enrollment Records</h3>
-                </div>
-                <button id="downloadCsvBtn" onclick="downloadStudentsCSV()"
-                    style="display:inline-flex; align-items:center; gap:8px; background:var(--amber); color:#000; font-weight:600; font-size:0.88rem; padding:0.7rem 1.6rem; border-radius:10px; border:none; cursor:pointer; transition:0.2s; font-family:var(--font-body);">
-                    <i class="fas fa-download"></i> Export CSV
-                </button>
-            </div>
-
-            <!-- Students Table -->
-            <div class="glass-card" style="border-radius:16px; border:1px solid var(--border); overflow:hidden;">
-                <div style="overflow-x:auto;">
-                    <table style="width:100%; border-collapse:collapse; font-family:var(--font-body);">
-                        <thead>
-                            <tr style="border-bottom:1px solid var(--border);">
-                                <th style="padding:1rem 0.75rem; text-align:left; font-size:0.72rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-muted); white-space:nowrap;">#</th>
-                                <th style="padding:1rem 0.75rem; text-align:left; font-size:0.72rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-muted); white-space:nowrap;">Name</th>
-                                <th style="padding:1rem 0.75rem; text-align:left; font-size:0.72rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-muted); white-space:nowrap;">Email</th>
-                                <th style="padding:1rem 0.75rem; text-align:left; font-size:0.72rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-muted); white-space:nowrap;">WhatsApp</th>
-                                <th style="padding:1rem 0.75rem; text-align:left; font-size:0.72rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-muted); white-space:nowrap;">Course</th>
-                                <th style="padding:1rem 0.75rem; text-align:left; font-size:0.72rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-muted); white-space:nowrap;">Status</th>
-                                <th style="padding:1rem 0.75rem; text-align:left; font-size:0.72rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-muted); white-space:nowrap;">Date</th>
-                            </tr>
-                        </thead>
-                        <tbody id="studentsTableBody">
-                            <tr>
-                                <td colspan="7" style="padding:3rem; text-align:center; color:var(--text-muted);">
-                                    <i class="fas fa-spinner fa-spin" style="font-size:1.5rem; display:block; margin-bottom:0.75rem;"></i>
-                                    Loading enrollment records…
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
         </div>
     </main>
 
-    <!-- Firebase SDK (Compat Version) -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <!-- Sidebar Mobile Overlay -->
+    <div class="sidebar-mask" id="sidebarMask"></div>
 
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="script.js"></script>
 </body>
 
 </html>
-
