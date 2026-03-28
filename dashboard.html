@@ -88,35 +88,9 @@
             </div>
         </header>
 
-        <!-- Dynamic Content Sections -->
+        <!-- Dashboard Main Content -->
         <div id="overview-section" class="dash-section active">
-            <!-- Stats Grid -->
-            <section class="stat-summary-grid">
-                <div class="premium-stat-card glass-card gold-border">
-                    <div class="stat-content">
-                        <span class="stat-label">Programs Enrolled</span>
-                        <h3 id="totalCourses">0</h3>
-                    </div>
-                    <div class="stat-icon-wrapper"><i class="fas fa-book-open"></i></div>
-                </div>
-                <div class="premium-stat-card glass-card">
-                    <div class="stat-content">
-                        <span class="stat-label">Milestones</span>
-                        <h3 id="totalLessons">0</h3>
-                        <p class="stat-extra">Sessions Attended</p>
-                    </div>
-                </div>
-                <div class="premium-stat-card glass-card">
-                    <div class="stat-content">
-                        <span class="stat-label">Performance</span>
-                        <h3 id="avgScore">0%</h3>
-                        <p class="stat-extra">Overall Grade</p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Dashboard Sections Grid -->
-            <div class="dashboard-grid-layout">
+            <div class="dashboard-grid-layout full-width">
                 <!-- Courses Preview -->
                 <section class="dash-block">
                     <div class="block-header">
@@ -124,27 +98,11 @@
                         <a href="#" class="accent-link" data-go-to="courses">View All <i class="fas fa-arrow-right"></i></a>
                     </div>
                     <div id="coursesContainer" class="dashboard-courses-list">
-                        <!-- Dynamic Course Cards -->
+                        <!-- Dynamic Course Cards (Handled by JS) -->
                         <div class="loading-state">
                             <i class="fas fa-circle-notch fa-spin"></i>
                             <p>Initializing your dashboard...</p>
                         </div>
-                    </div>
-                </section>
-
-                <!-- Live Sessions -->
-                <section class="dash-block">
-                    <div class="block-header">
-                        <h3>Upcoming Live Session</h3>
-                    </div>
-                    <div class="live-event-card glass-card">
-                        <div class="live-badge">Live Today</div>
-                        <h4>Module 4: AI Mastery & Creative Tools</h4>
-                        <div class="session-meta">
-                            <span class="host"><i class="fas fa-chalkboard-teacher"></i> Shaheer</span>
-                            <span class="time"><i class="fas fa-clock"></i> 8:00 PM (PKT)</span>
-                        </div>
-                        <a href="#" class="btn btn-primary btn-block btn-join">Join Live Training <i class="fas fa-video"></i></a>
                     </div>
                 </section>
             </div>

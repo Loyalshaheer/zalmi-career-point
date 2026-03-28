@@ -53,8 +53,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================================
     //  MOBILE MENU (Landing Page)
     // ============================================================
-    const mobileBtn = document.querySelector('.mobile-menu-btn');
-    const navLinks  = document.querySelector('.pd-nav-links');
     if (mobileBtn && navLinks) {
         mobileBtn.addEventListener('click', () => {
             navLinks.classList.toggle('active');
@@ -62,6 +60,104 @@ document.addEventListener('DOMContentLoaded', () => {
             mobileBtn.querySelector('i').classList.toggle('fa-times');
         });
     }
+
+    // ============================================================
+    //  DYNAMIC COURSES (Landing Page)
+    // ============================================================
+    let activeCourses = [];
+
+    async function fetchAndRenderCourses() {
+        const container = document.getElementById('coursesContainer');
+        const select    = document.getElementById('course');
+        if (!container && !select) return;
+
+        try {
+            const snap = await db.collection('courses').where('status', '==', 'live').orderBy('createdAt', 'desc').get();
+            activeCourses = [];
+            snap.forEach(doc => activeCourses.push({ id: doc.id, ...doc.data() }));
+
+            // Render Cards on Landing Page
+            if (container) {
+                if (activeCourses.length === 0) {
+                    container.innerHTML = `<div style="grid-column: span 12; text-align: center; padding: 4rem; opacity:0.6;"><p>New programs launching soon. Stay tuned!</p></div>`;
+                } else {
+                    container.innerHTML = activeCourses.map((c, i) => {
+                        // Bento layout logic: first is featured, rest are third
+                        const isFeatured = i === 0;
+                        const colClass = isFeatured ? 'pd-card-featured' : 'pd-card-third';
+                        return `
+                            <div class="pd-card ${colClass}" data-reveal="fade-up">
+                                ${isFeatured ? '<div class="pd-card-glow"></div>' : ''}
+                                <div class="pd-tag"><i class="fas fa-broadcast-tower"></i> Live Batch Open</div>
+                                <h3 class="${isFeatured ? 'pd-card-title' : 'pd-card-sm-title'}">${sanitize(c.title)}</h3>
+                                <p class="${isFeatured ? 'pd-card-body' : 'pd-card-sm-body'}">${sanitize(c.description || c.eligibility)}</p>
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto;">
+                                    <div style="font-size:0.9rem; color:var(--text-secondary);">
+                                        <strong>${sanitize(c.startTime)}</strong><br>
+                                        <span style="font-size:0.75rem;">${sanitize(c.timing)}</span>
+                                    </div>
+                                    <a href="#enroll" class="pd-btn-primary" style="padding: 0.6rem 1.2rem; font-size: 0.85rem;" onclick="preSelectCourse('${c.id}')">Enroll Now</a>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    
+                    // Re-init reveal observer for new elements
+                    const newElements = container.querySelectorAll('[data-reveal]');
+                    const observer = new IntersectionObserver((entries) => {
+                        entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('is-revealed'); });
+                    }, { threshold: 0.1 });
+                    newElements.forEach(el => observer.observe(el));
+                }
+            }
+
+            // Populate Dropdown
+            if (select) {
+                select.innerHTML = '<option value="" disabled selected>Select a program</option>' + 
+                    activeCourses.map(c => `<option value="${c.id}">${sanitize(c.title)}</option>`).join('');
+            }
+
+        } catch (err) {
+            console.error('Error fetching courses:', err);
+        }
+    }
+
+    // Helper for "Enroll Now" buttons on cards
+    window.preSelectCourse = (courseId) => {
+        const select = document.getElementById('course');
+        if (select) {
+            select.value = courseId;
+            updateCourseDisplay(courseId);
+            document.getElementById('enrollModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    };
+
+    // Update price and status message in enrollment form
+    window.updateCourseDisplay = (courseId) => {
+        const c = activeCourses.find(x => x.id === courseId);
+        const statusMsg = document.getElementById('courseStatusMsg');
+        const statusText = document.getElementById('courseStatusText');
+        const amountDue = document.getElementById('amountDue');
+
+        if (c) {
+            if (amountDue) amountDue.textContent = `Rs ${c.price}`;
+            if (statusMsg) {
+                if (c.status === 'live') {
+                    statusMsg.style.display = 'none';
+                } else {
+                    statusMsg.style.display = 'block';
+                    if (statusText) statusText.textContent = `This program is currently ${c.status}.`;
+                }
+            }
+        }
+    };
+
+    function sanitize(str) {
+        return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    fetchAndRenderCourses();
 
     // ============================================================
     //  ENROLLMENT FORM & PAYMENT (Landing Page)
@@ -86,6 +182,8 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const docRef = await db.collection('enrollments').add({
                     ...data,
+                    courseId:       data.course, // store the ID
+                    courseName:     activeCourses.find(c => c.id === data.course)?.title || data.course,
                     status:         'form_submitted',
                     paymentStatus:  'pending',
                     submittedAt:    firebase.firestore.FieldValue.serverTimestamp(),
@@ -257,10 +355,52 @@ document.addEventListener('DOMContentLoaded', () => {
                 setText('avgScore', (data.avgPerformance || '0') + '%');
             }
 
-            // Load Courses Preview
+            // Load Student Enrollments
+            const enrollSnap = await db.collection('enrollments')
+                .where('email', '==', user.email) // Match by email as backup to UID
+                .where('status', 'in', ['active', 'payment_confirmed'])
+                .get();
+
             const coursesContainer = document.getElementById('coursesContainer');
             if (coursesContainer) {
-                coursesContainer.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:3rem; opacity:0.5;"><i class="fas fa-box-open fa-2x"></i><p>No active courses found.</p></div>';
+                if (enrollSnap.empty) {
+                    coursesContainer.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:3rem; opacity:0.5;"><i class="fas fa-box-open fa-2x"></i><p>No active courses found.</p></div>';
+                } else {
+                    let html = '';
+                    for (const enrollDoc of enrollSnap.docs) {
+                        const enrollData = enrollDoc.data();
+                        // Fetch course metadata
+                        const courseDoc = await db.collection('courses').doc(enrollData.courseId || enrollData.course).get();
+                        const c = courseDoc.exists ? courseDoc.data() : { title: enrollData.courseName || enrollData.course, imageUrl: 'assets/course-placeholder.png' };
+                        
+                        html += `
+                            <div class="course-card">
+                                <div class="course-image">
+                                    <img src="${c.imageUrl || 'assets/course-placeholder.png'}" alt="${c.title}">
+                                    <div class="course-tag active">Enrolled</div>
+                                </div>
+                                <div class="course-content">
+                                    <h3 class="course-title">${c.title}</h3>
+                                    <div class="course-meta">
+                                        <span><i class="fas fa-calendar-alt"></i> Batch 2026</span>
+                                        <span><i class="fas fa-clock"></i> ${c.timing || '8 PM - 10 PM'}</span>
+                                    </div>
+                                    <div class="course-progress-container">
+                                        <div class="course-progress-text">
+                                            <span>Progress</span>
+                                            <span>0%</span>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                    <a href="#" class="btn btn-primary btn-block" style="margin-top:1.5rem;">Continue Learning</a>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    coursesContainer.innerHTML = html;
+                }
             }
         } catch (err) { console.error('Dashboard data error:', err); }
     }

@@ -711,36 +711,11 @@
                     <p class="pd-section-sub">Live, instructor-led courses with AI tools built in. No fluff. Just skills that generate real income.</p>
                 </div>
 
-                <div class="pd-bento">
-                    <!-- Featured Card -->
-                    <div class="pd-card pd-card-featured" data-reveal="fade-up">
-                        <div class="pd-card-glow"></div>
-                        <div class="pd-tag"><i class="fas fa-broadcast-tower"></i> Live Batch Open</div>
-                        <h3 class="pd-card-title">Content Creation<br>with <span>Artificial Intelligence</span></h3>
-                        <p class="pd-card-body">Master viral content production, AI video tools, influencer strategies, and global client acquisition in one intensive program.</p>
-                        <a href="#enroll" class="pd-btn-primary">Secure Your Seat <i class="fas fa-arrow-right"></i></a>
-                    </div>
-                    <!-- Side Card: Certification -->
-                    <div class="pd-card pd-card-side" data-reveal="fade-up">
-                        <div class="pd-card-icon"><i class="fas fa-award"></i></div>
-                        <h4 class="pd-card-sm-title">Global Certification</h4>
-                        <p class="pd-card-sm-body">Receive a verifiable certificate upon completion — recognized by international freelance platforms and employers.</p>
-                    </div>
-                    <!-- Bottom Small Cards -->
-                    <div class="pd-card pd-card-third" data-reveal="fade-up">
-                        <div class="pd-card-icon indigo-icon"><i class="fas fa-code"></i></div>
-                        <h4 class="pd-card-sm-title">Web & App Creation with AI</h4>
-                        <p class="pd-card-sm-body">Build digital products using AI-assisted code. Coming soon.</p>
-                    </div>
-                    <div class="pd-card pd-card-third" data-reveal="fade-up">
-                        <div class="pd-card-icon indigo-icon"><i class="fas fa-robot"></i></div>
-                        <h4 class="pd-card-sm-title">AI Earning Strategies</h4>
-                        <p class="pd-card-sm-body">Advanced freelancing and monetization techniques powered by AI tools.</p>
-                    </div>
-                    <div class="pd-card pd-card-third" data-reveal="fade-up" style="background: var(--amber-dim); border-color: var(--border-amber);">
-                        <div class="pd-tag">Community</div>
-                        <h4 class="pd-card-sm-title" style="color: var(--amber);">Private Learning Community</h4>
-                        <p class="pd-card-sm-body">WhatsApp groups, live sessions, peer reviews, and mentorship — all included.</p>
+                <div class="pd-bento" id="coursesContainer">
+                    <!-- Dynamic Courses will be injected here -->
+                    <div style="grid-column: span 12; text-align: center; padding: 4rem;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--amber); margin-bottom: 1rem;"></i>
+                        <p style="color: var(--text-muted);">Loading our programs...</p>
                     </div>
                 </div>
             </div>
@@ -903,11 +878,9 @@
                             <label class="pd-form-label" for="course">Select Course</label>
                             <div class="pd-input-wrap">
                                 <i class="fas fa-laptop-code"></i>
-                                <select id="course" name="course" required>
+                                <select id="course" name="course" required onchange="updateCourseDisplay(this.value)">
                                     <option value="" disabled selected>Select a program</option>
-                                    <option value="content-creation">Content Creation with AI</option>
-                                    <option value="web-app">Web & App Creation with AI</option>
-                                    <option value="earning-strategies">AI Earning Strategies (Advanced)</option>
+                                    <!-- Dynamic Options from Firestore -->
                                 </select>
                                 <div id="courseStatusMsg" style="display:none; color:var(--amber); font-size:.82rem; margin-top:.5rem; padding:.5rem .8rem; border-radius:8px; background:var(--amber-dim); border:1px solid var(--border-amber);">
                                     <i class="fas fa-lock" style="margin-right:5px;"></i>

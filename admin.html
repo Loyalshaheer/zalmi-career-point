@@ -467,6 +467,9 @@
             <button class="adm-nav-item" data-view="active" onclick="switchView('active', this)">
                 <i class="fas fa-check-circle"></i> Active
             </button>
+            <button class="adm-nav-item" data-view="courses" onclick="switchView('courses', this)">
+                <i class="fas fa-graduation-cap"></i> Course Manager
+            </button>
 
             <div class="adm-nav-section">Actions</div>
             <a href="dashboard.html" class="adm-nav-item">
@@ -590,6 +593,35 @@
                 </div>
             </div>
 
+            <!-- Course Management Table (Hidden by default) -->
+            <div id="courseManagementSection" style="display: none;">
+                <div class="adm-table-section">
+                    <div class="adm-table-header">
+                        <div class="adm-table-title">Manage Programs</div>
+                        <button class="adm-btn adm-btn-primary" onclick="openCourseModal()">
+                            <i class="fas fa-plus"></i> Launch New Course
+                        </button>
+                    </div>
+                    <div class="adm-table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Image</th>
+                                    <th>Course Title</th>
+                                    <th>Starting</th>
+                                    <th>Timing</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="coursesTableBody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -604,6 +636,63 @@
             </div>
             <div class="adm-detail-grid" id="modalGrid"></div>
             <div style="display:flex; gap:0.75rem; margin-top:2rem; flex-wrap:wrap;" id="modalActions"></div>
+        </div>
+    </div>
+
+    <!-- Course Add/Edit Modal -->
+    <div class="adm-modal-overlay" id="courseModal">
+        <div class="adm-modal" style="max-width: 700px;">
+            <button class="adm-modal-close" onclick="closeCourseModal()"><i class="fas fa-times"></i></button>
+            <h2 id="courseModalTitle" style="margin-bottom: 1.5rem;">Launch New Course</h2>
+            <form id="courseForm" onsubmit="handleCourseSubmit(event)">
+                <input type="hidden" id="courseEditId">
+                <div class="adm-detail-grid">
+                    <div class="adm-detail-field full">
+                        <label class="adm-detail-label">Course Title</label>
+                        <input type="text" id="cTitle" required style="width:100%; padding:10px; border-radius:8px; background:var(--bg-surface); border:1px solid var(--border); color:white;">
+                    </div>
+                    <div class="adm-detail-field full">
+                        <label class="adm-detail-label">Image URL</label>
+                        <input type="url" id="cImage" required placeholder="https://..." style="width:100%; padding:10px; border-radius:8px; background:var(--bg-surface); border:1px solid var(--border); color:white;">
+                    </div>
+                    <div class="adm-detail-field">
+                        <label class="adm-detail-label">Start Date/Text</label>
+                        <input type="text" id="cStart" placeholder="e.g. Oct 2026" required style="width:100%; padding:10px; border-radius:8px; background:var(--bg-surface); border:1px solid var(--border); color:white;">
+                    </div>
+                    <div class="adm-detail-field">
+                        <label class="adm-detail-label">Class Timing</label>
+                        <input type="text" id="cTiming" placeholder="e.g. 8 PM - 10 PM" required style="width:100%; padding:10px; border-radius:8px; background:var(--bg-surface); border:1px solid var(--border); color:white;">
+                    </div>
+                    <div class="adm-detail-field full">
+                        <label class="adm-detail-label">Eligibility / Short Info</label>
+                        <input type="text" id="cEligibility" placeholder="e.g. Open for all" required style="width:100%; padding:10px; border-radius:8px; background:var(--bg-surface); border:1px solid var(--border); color:white;">
+                    </div>
+                    <div class="adm-detail-field full">
+                        <label class="adm-detail-label">Full Description</label>
+                        <textarea id="cDesc" rows="4" style="width:100%; padding:10px; border-radius:8px; background:var(--bg-surface); border:1px solid var(--border); color:white;"></textarea>
+                    </div>
+                    <div class="adm-detail-field">
+                        <label class="adm-detail-label">Price (PKR)</label>
+                        <input type="text" id="cPrice" placeholder="e.g. 5,000" required style="width:100%; padding:10px; border-radius:8px; background:var(--bg-surface); border:1px solid var(--border); color:white;">
+                    </div>
+                    <div class="adm-detail-field">
+                        <label class="adm-detail-label">Original Price (For Strike)</label>
+                        <input type="text" id="cPriceOld" placeholder="e.g. 10,000" style="width:100%; padding:10px; border-radius:8px; background:var(--bg-surface); border:1px solid var(--border); color:white;">
+                    </div>
+                    <div class="adm-detail-field">
+                        <label class="adm-detail-label">Status</label>
+                        <select id="cStatus" style="width:100%; padding:10px; border-radius:8px; background:var(--bg-surface); border:1px solid var(--border); color:white;">
+                            <option value="live">Live / Accepting Enrollments</option>
+                            <option value="draft">Draft / Hidden</option>
+                            <option value="closed">Closed / Fully Booked</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                    <button type="submit" class="adm-btn adm-btn-primary">Save Course</button>
+                    <button type="button" class="adm-btn adm-btn-ghost" onclick="closeCourseModal()">Cancel</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -638,6 +727,7 @@
 
     // ── State ──
     let allRows     = [];
+    let allCourses  = [];
     let filteredRows = [];
     let currentFilter = 'all';
     let currentView   = 'students';
@@ -654,6 +744,7 @@
         const el   = document.getElementById('adminName');
         if (el) el.textContent = name.charAt(0).toUpperCase() + name.slice(1);
         loadData();
+        loadCourses();
     });
 
     // ── Logout ──
@@ -908,10 +999,142 @@
         currentView = view;
         document.querySelectorAll('.adm-nav-item').forEach(i => i.classList.remove('active'));
         if (el) el.classList.add('active');
-        const titles = { students: 'All Enrollments', pending: 'Pending Verification', active: 'Active Students' };
-        setText('viewTitle',  titles[view] || 'Students');
-        setText('tableTitle', titles[view] || 'Students');
-        applyFilter();
+
+        // Toggle sections
+        const isCourseView = view === 'courses';
+        const studentSection = document.querySelector('.adm-table-section').parentElement; // Main table section
+        const courseSection = document.getElementById('courseManagementSection');
+        const statsSection = document.querySelector('.adm-stats');
+
+        if (isCourseView) {
+            if (studentSection) studentSection.style.display = 'none';
+            if (statsSection) statsSection.style.display = 'none';
+            if (courseSection) courseSection.style.display = 'block';
+            setText('viewTitle', 'Course Management');
+            setText('tableTitle', 'Courses');
+        } else {
+            if (studentSection) studentSection.style.display = 'block';
+            if (statsSection) statsSection.style.display = 'grid';
+            if (courseSection) courseSection.style.display = 'none';
+            const titles = { students: 'All Enrollments', pending: 'Pending Verification', active: 'Active Students' };
+            setText('viewTitle',  titles[view] || 'Students');
+            setText('tableTitle', titles[view] || 'Students');
+            applyFilter();
+        }
+    }
+
+    // ── Course Management Logic ──
+    async function loadCourses() {
+        try {
+            const snap = await db.collection('courses').orderBy('createdAt', 'desc').get();
+            allCourses = [];
+            snap.forEach(doc => allCourses.push({ id: doc.id, ...doc.data() }));
+            renderCoursesTable();
+        } catch(err) {
+            console.error(err);
+        }
+    }
+
+    function renderCoursesTable() {
+        const tbody = document.getElementById('coursesTableBody');
+        if (!tbody) return;
+
+        if (!allCourses.length) {
+            tbody.innerHTML = `<tr><td colspan="6"><div class="adm-empty"><p>No courses found. Launch your first course!</p></div></td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = allCourses.map(c => `
+            <tr>
+                <td><img src="${sanitize(c.imageUrl)}" style="height:40px; width:70px; object-fit:cover; border-radius:6px; border:1px solid var(--border);"></td>
+                <td class="td-name">${sanitize(c.title)}</td>
+                <td>${sanitize(c.startTime)}</td>
+                <td>${sanitize(c.timing)}</td>
+                <td><span class="s-badge ${c.status === 'live' ? 'active' : 'pending'}">${sanitize(c.status)}</span></td>
+                <td>
+                    <div style="display:flex; gap:6px;">
+                        <button class="adm-btn adm-btn-sm adm-btn-ghost" onclick="editCourse('${c.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="adm-btn adm-btn-sm adm-btn-reject" onclick="deleteCourse('${c.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function openCourseModal() {
+        document.getElementById('courseModalTitle').textContent = 'Launch New Course';
+        document.getElementById('courseEditId').value = '';
+        document.getElementById('courseForm').reset();
+        document.getElementById('courseModal').classList.add('active');
+    }
+
+    function closeCourseModal() {
+        document.getElementById('courseModal').classList.remove('active');
+    }
+
+    async function handleCourseSubmit(e) {
+        e.preventDefault();
+        const id = document.getElementById('courseEditId').value;
+        const data = {
+            title:       document.getElementById('cTitle').value,
+            imageUrl:    document.getElementById('cImage').value,
+            startTime:   document.getElementById('cStart').value,
+            timing:      document.getElementById('cTiming').value,
+            eligibility: document.getElementById('cEligibility').value,
+            description: document.getElementById('cDesc').value,
+            price:       document.getElementById('cPrice').value,
+            priceOld:    document.getElementById('cPriceOld').value,
+            status:      document.getElementById('cStatus').value,
+            createdAt:   firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        try {
+            if (id) {
+                await db.collection('courses').doc(id).update(data);
+                showToast('Course updated successfully', 'success');
+            } else {
+                await db.collection('courses').add(data);
+                showToast('New course launched!', 'success');
+            }
+            closeCourseModal();
+            loadCourses();
+        } catch(err) {
+            showToast('Error: ' + err.message, 'error');
+        }
+    }
+
+    function editCourse(id) {
+        const c = allCourses.find(x => x.id === id);
+        if (!c) return;
+
+        document.getElementById('courseModalTitle').textContent = 'Edit Course';
+        document.getElementById('courseEditId').value = c.id;
+        document.getElementById('cTitle').value = c.title || '';
+        document.getElementById('cImage').value = c.imageUrl || '';
+        document.getElementById('cStart').value = c.startTime || '';
+        document.getElementById('cTiming').value = c.timing || '';
+        document.getElementById('cEligibility').value = c.eligibility || '';
+        document.getElementById('cDesc').value = c.description || '';
+        document.getElementById('cPrice').value = c.price || '';
+        document.getElementById('cPriceOld').value = c.priceOld || '';
+        document.getElementById('cStatus').value = c.status || 'live';
+
+        document.getElementById('courseModal').classList.add('active');
+    }
+
+    async function deleteCourse(id) {
+        if (!confirm('Are you sure you want to delete this course? This will not affect existing enrollments.')) return;
+        try {
+            await db.collection('courses').doc(id).delete();
+            showToast('Course deleted', 'success');
+            loadCourses();
+        } catch(err) {
+            showToast('Error: ' + err.message, 'error');
+        }
     }
 
     // ── CSV Export ──

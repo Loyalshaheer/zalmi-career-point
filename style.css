@@ -2359,3 +2359,16 @@ nav {
 @media (max-width: 768px) {
     .stat-summary-grid { grid-template-columns: 1fr !important; }
 }
+
+/* Full Width Dashboard Layout */
+.dashboard-grid-layout.full-width {
+    grid-template-columns: 1fr !important;
+}
+.full-width .dash-block {
+    width: 100%;
+}
+.full-width .dashboard-courses-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+}
