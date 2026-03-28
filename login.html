@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Zalmi Career Point Student Portal</title>
+    <meta name="description" content="Access your Zalmi Career Point student dashboard and continue your learning journey.">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Noto+Sans+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .auth-page { min-height: 100vh; display: flex; flex-direction: column; }
+        .auth-main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6rem 1.5rem 3rem;
+            position: relative;
+        }
+        .auth-glow {
+            position: absolute;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(245,158,11,0.07) 0%, transparent 70%);
+            top: 50%; left: 50%;
+            transform: translate(-50%,-50%);
+            pointer-events: none;
+        }
+        .auth-card-pd {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: 3.5rem;
+            width: 100%;
+            max-width: 480px;
+            position: relative;
+            z-index: 2;
+        }
+        .auth-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 2.5rem; }
+        .auth-logo img { height: 36px; }
+        .auth-logo-name { font-size: 1rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; }
+        .auth-logo-name span { color: var(--amber); }
+        .auth-title { font-size: 1.7rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.03em; margin-bottom: 0.4rem; }
+        .auth-subtitle { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 2.5rem; }
+        .pd-form-group { margin-bottom: 1.25rem; }
+        .pd-form-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.45rem; letter-spacing: 0.02em; }
+        .pd-input-wrap { position: relative; }
+        .pd-input-wrap i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem; pointer-events: none; }
+        .pd-input-wrap input {
+            width: 100%;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            padding: 0.8rem 1rem 0.8rem 2.6rem;
+            outline: none;
+            transition: border-color var(--transition-fast);
+        }
+        .pd-input-wrap input::placeholder { color: var(--text-muted); }
+        .pd-input-wrap input:focus { border-color: var(--amber); }
+        .auth-submit-btn {
+            width: 100%;
+            background: var(--amber);
+            color: #000;
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 0.9rem;
+            border-radius: var(--radius-sm);
+            border: none;
+            cursor: pointer;
+            transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 1.75rem;
+        }
+        .auth-submit-btn:hover {
+            background: var(--amber-light);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(245,158,11,0.25);
+        }
+        .auth-toggle { margin-top: 2rem; text-align: center; font-size: 0.85rem; color: var(--text-muted); }
+        .auth-toggle a { color: var(--amber); font-weight: 600; text-decoration: none; }
+        .auth-toggle a:hover { color: var(--amber-light); }
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 0.75rem 0;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+        .auth-divider::before, .auth-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+        #errorMsg {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.3);
+            color: #FCA5A5;
+            border-radius: var(--radius-sm);
+            padding: 0.75rem 1rem;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        .register-only { display: none; }
+    </style>
+</head>
+<body class="auth-page">
+
+    <div class="bg-elements">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <header class="glass-header">
+        <div class="container pd-nav" style="display:flex; justify-content:space-between; align-items:center; height:68px; padding:0 2rem;">
+            <a href="index.html" class="auth-logo" style="display:flex; align-items:center; gap:10px;">
+                <img src="/C:/Users/HP/.gemini/antigravity/brain/f9e17126-13c6-4f53-bf05-de980e479b1d/zcp_logo_professional_v2_1774510067483.png" alt="ZCP Logo" style="height:36px;">
+                <span style="font-size:1rem; font-weight:700; color:var(--text-primary); letter-spacing:-0.02em;">Zalmi <span style="color:var(--amber);">Career</span> Point</span>
+            </a>
+            <a href="index.html" style="font-size:0.85rem; font-weight:500; color:var(--text-muted); text-decoration:none; display:flex; align-items:center; gap:6px; transition:color 0.2s;">
+                <i class="fas fa-arrow-left"></i> Back to Home
+            </a>
+        </div>
+    </header>
+
+    <main class="auth-main">
+        <div class="auth-glow"></div>
+        <div class="auth-card-pd">
+            <div class="auth-logo">
+                <img src="/C:/Users/HP/.gemini/antigravity/brain/f9e17126-13c6-4f53-bf05-de980e479b1d/zcp_logo_professional_v2_1774510067483.png" alt="ZCP">
+                <span class="auth-logo-name">Zalmi <span>Career</span> Point</span>
+            </div>
+
+            <h1 id="authTitle" class="auth-title">Welcome back</h1>
+            <p id="authSubtitle" class="auth-subtitle">Sign in to access your student dashboard.</p>
+
+            <div id="errorMsg"></div>
+
+            <form id="loginForm" class="auth-form">
+                <!-- Register-only fields -->
+                <div id="registerFields" class="register-only">
+                    <div class="pd-form-group">
+                        <label class="pd-form-label" for="regFullName">Full Name</label>
+                        <div class="pd-input-wrap">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="regFullName" placeholder="Your full name">
+                        </div>
+                    </div>
+                    <div class="pd-form-group">
+                        <label class="pd-form-label" for="regPhone">WhatsApp Number</label>
+                        <div class="pd-input-wrap">
+                            <i class="fab fa-whatsapp"></i>
+                            <input type="tel" id="regPhone" placeholder="e.g. 0333 4747734">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pd-form-group">
+                    <label class="pd-form-label" for="loginEmail">Email Address</label>
+                    <div class="pd-input-wrap">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="loginEmail" placeholder="yourname@gmail.com" required>
+                    </div>
+                </div>
+
+                <div class="pd-form-group">
+                    <label class="pd-form-label" for="loginPassword">Password</label>
+                    <div class="pd-input-wrap">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="loginPassword" placeholder="••••••••" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="auth-submit-btn">
+                    <span class="btn-text">Sign In to Dashboard</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </form>
+
+            <div class="auth-toggle">
+                Don't have an account? <a href="#" id="toggleAuth">Create account</a>
+            </div>
+            <div class="auth-toggle" style="margin-top:.75rem;">
+                <a href="#" class="forgot-password" style="color:var(--text-muted); font-weight:500;">Forgot password?</a>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

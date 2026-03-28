@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Console | Zalmi Career Point</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ── ADMIN LAYOUT ── */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg-base);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            min-height: 100vh;
+            display: flex;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Sidebar */
+        .adm-sidebar {
+            width: 260px;
+            min-height: 100vh;
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            z-index: 100;
+            padding: 2rem 1.5rem;
+        }
+        .adm-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .adm-logo img { height: 34px; }
+        .adm-logo-text { font-size: 0.95rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+        .adm-logo-text span { color: var(--amber); }
+        .adm-logo-sub { font-size: 0.65rem; color: var(--amber); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+
+        .adm-nav { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+        .adm-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: all 0.15s;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+        }
+        .adm-nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text-primary); }
+        .adm-nav-item.active { background: var(--amber-dim); color: var(--amber); font-weight: 600; }
+        .adm-nav-item i { width: 18px; text-align: center; font-size: 0.9rem; }
+        .adm-nav-section {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            padding: 1.5rem 1rem 0.5rem;
+        }
+
+        .adm-sidebar-footer {
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            margin-top: 1rem;
+        }
+        .adm-user-info { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; }
+        .adm-avatar {
+            width: 36px; height: 36px;
+            background: var(--amber-dim);
+            border: 1px solid var(--border-amber);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85rem;
+            color: var(--amber);
+            flex-shrink: 0;
+        }
+        .adm-user-name { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); }
+        .adm-user-role { font-size: 0.7rem; color: var(--amber); font-weight: 600; }
+        .adm-logout {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 0.65rem 1rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: var(--font-body);
+        }
+        .adm-logout:hover { border-color: rgba(239,68,68,0.4); color: #FCA5A5; }
+
+        /* Main Content */
+        .adm-main {
+            margin-left: 260px;
+            flex: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Bar */
+        .adm-topbar {
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border);
+            padding: 1.25rem 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .adm-topbar-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; }
+        .adm-topbar-sub { font-size: 0.78rem; color: var(--text-muted); margin-top: 1px; }
+        .adm-topbar-actions { display: flex; gap: 0.75rem; align-items: center; }
+
+        /* Page content */
+        .adm-content { padding: 2.5rem; }
+
+        /* STAT CARDS */
+        .adm-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.25rem;
+            margin-bottom: 2.5rem;
+        }
+        .adm-stat {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.75rem;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+        .adm-stat:hover { border-color: var(--border-amber); transform: translateY(-2px); }
+        .adm-stat-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .adm-stat-label i { font-size: 0.85rem; }
+        .adm-stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.04em;
+            line-height: 1;
+        }
+        .adm-stat-value.amber { color: var(--amber); }
+        .adm-stat-value.green { color: #4ade80; }
+        .adm-stat-value.red   { color: #f87171; }
+        .adm-stat-change {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        /* TABLE SECTION */
+        .adm-table-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        .adm-table-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .adm-table-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); flex: 1; min-width: 150px; }
+
+        /* Search */
+        .adm-search {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .adm-search i {
+            position: absolute;
+            left: 0.9rem;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            pointer-events: none;
+        }
+        .adm-search input {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 0.85rem;
+            padding: 0.6rem 1rem 0.6rem 2.4rem;
+            outline: none;
+            width: 220px;
+            transition: border-color 0.15s;
+        }
+        .adm-search input::placeholder { color: var(--text-muted); }
+        .adm-search input:focus { border-color: var(--amber); }
+
+        /* Filter Pills */
+        .adm-filters { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .adm-filter-pill {
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: var(--font-body);
+        }
+        .adm-filter-pill:hover { border-color: var(--border-amber); color: var(--amber); }
+        .adm-filter-pill.active { background: var(--amber-dim); border-color: var(--border-amber); color: var(--amber); }
+
+        /* Btn styles */
+        .adm-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 0.6rem 1.2rem;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            font-family: var(--font-body);
+            transition: all 0.15s;
+        }
+        .adm-btn-primary { background: var(--amber); color: #000; }
+        .adm-btn-primary:hover { background: var(--amber-light); transform: translateY(-1px); }
+        .adm-btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); }
+        .adm-btn-ghost:hover { border-color: var(--border-amber); color: var(--amber); }
+        .adm-btn-sm { padding: 4px 10px; font-size: 0.72rem; border-radius: 6px; }
+        .adm-btn-approve { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: #4ade80; }
+        .adm-btn-approve:hover { background: rgba(34,197,94,0.2); }
+        .adm-btn-reject { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
+        .adm-btn-reject:hover { background: rgba(239,68,68,0.2); }
+
+        /* Table */
+        .adm-table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        thead tr { border-bottom: 1px solid var(--border); }
+        th {
+            padding: 0.9rem 1.25rem;
+            text-align: left;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.15s;
+        }
+        th:hover { color: var(--text-primary); }
+        th .sort-icon { margin-left: 4px; opacity: 0.4; }
+        th.sorted .sort-icon { opacity: 1; color: var(--amber); }
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: rgba(255,255,255,0.02); }
+        td { padding: 1rem 1.25rem; font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; }
+        td.td-name { color: var(--text-primary); font-weight: 600; }
+        td.td-email { color: var(--text-muted); font-size: 0.8rem; }
+
+        /* Status badges */
+        .s-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 100px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            white-space: nowrap;
+        }
+        .s-badge::before { content:''; width:5px; height:5px; border-radius:50%; display:inline-block; }
+        .s-badge.pending { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); color: var(--amber); }
+        .s-badge.pending::before { background: var(--amber); }
+        .s-badge.active  { background: rgba(34,197,94,0.1);  border: 1px solid rgba(34,197,94,0.3);  color: #4ade80; }
+        .s-badge.active::before  { background: #4ade80; }
+        .s-badge.new     { background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.3); color: #818CF8; }
+        .s-badge.new::before     { background: #818CF8; }
+
+        /* Empty state */
+        .adm-empty {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+        }
+        .adm-empty i { font-size: 2.5rem; margin-bottom: 1rem; display: block; opacity: 0.3; }
+        .adm-empty p { font-size: 0.9rem; }
+
+        /* Loading spinner */
+        .adm-loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+        .adm-loading i { font-size: 1.5rem; display: block; margin-bottom: 0.75rem; }
+
+        /* Table Footer */
+        .adm-table-footer {
+            padding: 1rem 2rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        /* MODAL — Student Detail */
+        .adm-modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(4,8,18,0.85);
+            backdrop-filter: blur(6px);
+            z-index: 9000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        .adm-modal-overlay.active { opacity: 1; pointer-events: all; }
+        .adm-modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 580px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 2.5rem;
+            position: relative;
+            transform: scale(0.96);
+            transition: transform 0.2s;
+        }
+        .adm-modal-overlay.active .adm-modal { transform: scale(1); }
+        .adm-modal-close {
+            position: absolute; top: 1.25rem; right: 1.25rem;
+            width: 32px; height: 32px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem;
+            transition: all 0.15s;
+        }
+        .adm-modal-close:hover { border-color: var(--border-amber); color: var(--amber); }
+        .adm-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .adm-detail-field { display: flex; flex-direction: column; gap: 4px; }
+        .adm-detail-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+        .adm-detail-value { font-size: 0.9rem; font-weight: 600; color: var(--text-primary); }
+        .adm-detail-field.full { grid-column: 1 / -1; }
+
+        /* Responsive */
+        @media (max-width: 1200px) { .adm-stats { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 900px) {
+            .adm-sidebar { display: none; }
+            .adm-main { margin-left: 0; }
+            .adm-stats { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 600px) {
+            .adm-stats { grid-template-columns: 1fr; }
+            .adm-content { padding: 1.25rem; }
+            .adm-topbar { padding: 1rem 1.25rem; }
+        }
+
+        /* Toast */
+        .adm-toast {
+            position: fixed;
+            bottom: 2rem; right: 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 9999;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s var(--ease-out);
+            max-width: 340px;
+        }
+        .adm-toast.show { transform: translateY(0); opacity: 1; }
+        .adm-toast.success { border-color: rgba(34,197,94,0.4); }
+        .adm-toast.success i { color: #4ade80; }
+        .adm-toast.error { border-color: rgba(239,68,68,0.4); }
+        .adm-toast.error i { color: #f87171; }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="adm-sidebar">
+        <a href="index.html" class="adm-logo">
+            <img src="/C:/Users/HP/.gemini/antigravity/brain/f9e17126-13c6-4f53-bf05-de980e479b1d/zcp_logo_professional_v2_1774510067483.png" alt="ZCP">
+            <div>
+                <div class="adm-logo-text">Zalmi <span>Career</span> Point</div>
+                <div class="adm-logo-sub">Admin Console</div>
+            </div>
+        </a>
+
+        <nav class="adm-nav">
+            <div class="adm-nav-section">Management</div>
+            <button class="adm-nav-item active" data-view="students" onclick="switchView('students', this)">
+                <i class="fas fa-users"></i> All Students
+            </button>
+            <button class="adm-nav-item" data-view="pending" onclick="switchView('pending', this)">
+                <i class="fas fa-clock"></i> Pending
+                <span id="pendingCount" style="margin-left:auto; background:rgba(245,158,11,0.15); color:var(--amber); font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:100px; display:none;"></span>
+            </button>
+            <button class="adm-nav-item" data-view="active" onclick="switchView('active', this)">
+                <i class="fas fa-check-circle"></i> Active
+            </button>
+
+            <div class="adm-nav-section">Actions</div>
+            <a href="dashboard.html" class="adm-nav-item">
+                <i class="fas fa-th-large"></i> Student Dashboard
+            </a>
+            <a href="index.html" class="adm-nav-item">
+                <i class="fas fa-home"></i> Main Website
+            </a>
+        </nav>
+
+        <div class="adm-sidebar-footer">
+            <div class="adm-user-info">
+                <div class="adm-avatar"><i class="fas fa-user-shield"></i></div>
+                <div>
+                    <div class="adm-user-name" id="adminName">Admin</div>
+                    <div class="adm-user-role">Super Admin</div>
+                </div>
+            </div>
+            <button class="adm-logout" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i> Sign out
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="adm-main">
+
+        <!-- Top Bar -->
+        <div class="adm-topbar">
+            <div>
+                <div class="adm-topbar-title" id="viewTitle">All Enrollments</div>
+                <div class="adm-topbar-sub">Real-time data from Firestore</div>
+            </div>
+            <div class="adm-topbar-actions">
+                <button id="refreshBtn" class="adm-btn adm-btn-ghost" onclick="loadData()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+                <button class="adm-btn adm-btn-primary" onclick="exportCSV()">
+                    <i class="fas fa-download"></i> Export CSV
+                </button>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="adm-content">
+
+            <!-- Stats -->
+            <div class="adm-stats">
+                <div class="adm-stat">
+                    <div class="adm-stat-label"><i class="fas fa-users"></i> Total Enrollments</div>
+                    <div class="adm-stat-value" id="statTotal">—</div>
+                    <div class="adm-stat-change">All time</div>
+                </div>
+                <div class="adm-stat">
+                    <div class="adm-stat-label"><i class="fas fa-clock"></i> Pending Verification</div>
+                    <div class="adm-stat-value amber" id="statPending">—</div>
+                    <div class="adm-stat-change">Awaiting review</div>
+                </div>
+                <div class="adm-stat">
+                    <div class="adm-stat-label"><i class="fas fa-check-circle"></i> Active Students</div>
+                    <div class="adm-stat-value green" id="statActive">—</div>
+                    <div class="adm-stat-change">Payment verified</div>
+                </div>
+                <div class="adm-stat">
+                    <div class="adm-stat-label"><i class="fas fa-graduation-cap"></i> Top Course</div>
+                    <div class="adm-stat-value" id="statTopCourse" style="font-size:1.1rem; margin-top:6px; line-height:1.3; color:var(--text-secondary);">—</div>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="adm-table-section">
+                <div class="adm-table-header">
+                    <div class="adm-table-title" id="tableTitle">All Students</div>
+
+                    <div class="adm-search">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Search name, email, phone…" oninput="filterTable()">
+                    </div>
+
+                    <div class="adm-filters">
+                        <button class="adm-filter-pill active" data-filter="all" onclick="setFilter('all', this)">All</button>
+                        <button class="adm-filter-pill" data-filter="pending" onclick="setFilter('pending', this)">Pending</button>
+                        <button class="adm-filter-pill" data-filter="active" onclick="setFilter('active', this)">Active</button>
+                        <button class="adm-filter-pill" data-filter="content-creation" onclick="setFilter('content-creation', this)">Content AI</button>
+                        <button class="adm-filter-pill" data-filter="web-app" onclick="setFilter('web-app', this)">Web & App</button>
+                    </div>
+                </div>
+
+                <div class="adm-table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable('idx')"># <span class="sort-icon">↕</span></th>
+                                <th onclick="sortTable('fullName')">Name <span class="sort-icon">↕</span></th>
+                                <th onclick="sortTable('email')">Email <span class="sort-icon">↕</span></th>
+                                <th onclick="sortTable('whatsapp')">WhatsApp <span class="sort-icon">↕</span></th>
+                                <th onclick="sortTable('course')">Course <span class="sort-icon">↕</span></th>
+                                <th onclick="sortTable('city')">City <span class="sort-icon">↕</span></th>
+                                <th onclick="sortTable('paymentMethod')">Payment <span class="sort-icon">↕</span></th>
+                                <th onclick="sortTable('status')">Status <span class="sort-icon">↕</span></th>
+                                <th onclick="sortTable('ts')">Date <span class="sort-icon">↕</span></th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsTableBody">
+                            <tr>
+                                <td colspan="10">
+                                    <div class="adm-loading">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        Loading enrollment records…
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="adm-table-footer">
+                    <span id="tableCount">Loading…</span>
+                    <span id="lastUpdated"></span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Student Detail Modal -->
+    <div class="adm-modal-overlay" id="detailModal">
+        <div class="adm-modal">
+            <button class="adm-modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+            <div style="margin-bottom:1.5rem;">
+                <div style="font-size:0.72rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--amber); margin-bottom:4px;">Enrollment Details</div>
+                <h2 id="modalName" style="font-size:1.5rem; font-weight:700; color:var(--text-primary); letter-spacing:-0.02em;"></h2>
+                <div id="modalStatus" style="margin-top:6px;"></div>
+            </div>
+            <div class="adm-detail-grid" id="modalGrid"></div>
+            <div style="display:flex; gap:0.75rem; margin-top:2rem; flex-wrap:wrap;" id="modalActions"></div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="adm-toast" id="toast"><i class="fas fa-check-circle"></i> <span id="toastMsg"></span></div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+    <script>
+    // ── Firebase Init ──
+    const firebaseConfig = {
+        apiKey:            "AIzaSyB4KG8r1XRpW60ZoYsYQnFGwYoadmDhFHg",
+        authDomain:        "zalmi-career-point.firebaseapp.com",
+        projectId:         "zalmi-career-point",
+        storageBucket:     "zalmi-career-point.firebasestorage.app",
+        messagingSenderId: "137170146690",
+        appId:             "1:137170146690:web:7f3ec8f2059e4b780a2b9b"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db   = firebase.firestore();
+
+    const ADMIN_EMAILS = [
+        'loyalshaheer05@gmail.com',
+        'khan@gmail.com',
+        'shaheer@zalmicareer.com',
+        'admin@zalmicareer.com'
+    ];
+
+    // ── State ──
+    let allRows     = [];
+    let filteredRows = [];
+    let currentFilter = 'all';
+    let currentView   = 'students';
+    let sortKey       = 'ts';
+    let sortAsc       = false;
+
+    // ── Auth Guard ──
+    auth.onAuthStateChanged(user => {
+        if (!user || !ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+            window.location.href = 'login.html';
+            return;
+        }
+        const name = user.email.split('@')[0];
+        const el   = document.getElementById('adminName');
+        if (el) el.textContent = name.charAt(0).toUpperCase() + name.slice(1);
+        loadData();
+    });
+
+    // ── Logout ──
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+        auth.signOut().then(() => window.location.href = 'index.html');
+    });
+
+    // ── Load Data ──
+    async function loadData() {
+        const btn = document.getElementById('refreshBtn');
+        if (btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading…'; btn.disabled = true; }
+
+        try {
+            const snap = await db.collection('enrollments').orderBy('submittedAt', 'desc').get();
+            allRows = [];
+
+            snap.forEach((doc, i) => {
+                const d  = doc.data();
+                const ts = d.submittedAt?.toDate?.() || d.confirmedAt?.toDate?.() || null;
+                const isPending = ['form_submitted','pending_verification','payment_confirmed']
+                                   .includes(d.status) || d.paymentStatus === 'pending_verification';
+
+                allRows.push({
+                    id:            doc.id,
+                    idx:           0, // set later
+                    fullName:      d.fullName      || '—',
+                    email:         d.email         || '—',
+                    whatsapp:      d.whatsapp || d.phone || '—',
+                    course:        d.course        || '—',
+                    city:          d.city          || '—',
+                    occupation:    d.occupation    || '—',
+                    department:    d.department    || '—',
+                    referral:      d.referral      || '—',
+                    paymentMethod: d.paymentMethod || '—',
+                    status:        d.status        || 'form_submitted',
+                    paymentStatus: d.paymentStatus || '—',
+                    isPending,
+                    tsObj:         ts,
+                    ts:            ts ? ts.toLocaleDateString('en-PK') : '—'
+                });
+            });
+
+            updateStats();
+            applyFilter();
+            updateLastUpdated();
+
+        } catch(err) {
+            console.error(err);
+            showToast('Failed to load data: ' + err.message, 'error');
+        }
+
+        if (btn) { btn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh'; btn.disabled = false; }
+    }
+
+    // ── Stats ──
+    function updateStats() {
+        const total   = allRows.length;
+        const pending = allRows.filter(r => r.isPending).length;
+        const active  = total - pending;
+
+        setText('statTotal',   total);
+        setText('statPending', pending);
+        setText('statActive',  active);
+
+        // Top course
+        const courseCounts = {};
+        allRows.forEach(r => { courseCounts[r.course] = (courseCounts[r.course] || 0) + 1; });
+        const top = Object.entries(courseCounts).sort((a,b) => b[1]-a[1])[0];
+        setText('statTopCourse', top ? `${top[0].replace(/-/g,' ')} (${top[1]})` : '—');
+
+        // Pending badge in sidebar
+        const badge = document.getElementById('pendingCount');
+        if (badge) {
+            badge.textContent = pending;
+            badge.style.display = pending > 0 ? 'inline' : 'none';
+        }
+    }
+
+    // ── Filter ──
+    function setFilter(f, el) {
+        currentFilter = f;
+        document.querySelectorAll('.adm-filter-pill').forEach(p => p.classList.remove('active'));
+        if (el) el.classList.add('active');
+        applyFilter();
+    }
+
+    function applyFilter() {
+        const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
+        let rows = [...allRows];
+
+        // View filter
+        if (currentView === 'pending') rows = rows.filter(r => r.isPending);
+        if (currentView === 'active')  rows = rows.filter(r => !r.isPending);
+
+        // Pill filter
+        if (currentFilter === 'pending') rows = rows.filter(r => r.isPending);
+        if (currentFilter === 'active')  rows = rows.filter(r => !r.isPending);
+        if (currentFilter !== 'all' && currentFilter !== 'pending' && currentFilter !== 'active') {
+            rows = rows.filter(r => r.course === currentFilter);
+        }
+
+        // Search
+        if (q) {
+            rows = rows.filter(r =>
+                r.fullName.toLowerCase().includes(q) ||
+                r.email.toLowerCase().includes(q) ||
+                r.whatsapp.includes(q) ||
+                r.city.toLowerCase().includes(q) ||
+                r.course.toLowerCase().includes(q)
+            );
+        }
+
+        // Sort
+        rows.sort((a,b) => {
+            let va = a[sortKey] ?? '';
+            let vb = b[sortKey] ?? '';
+            if (sortKey === 'ts') { va = a.tsObj || 0; vb = b.tsObj || 0; }
+            if (va < vb) return sortAsc ? -1 : 1;
+            if (va > vb) return sortAsc ? 1 : -1;
+            return 0;
+        });
+
+        rows = rows.map((r,i) => ({ ...r, idx: i + 1 }));
+        filteredRows = rows;
+        renderTable(rows);
+    }
+
+    function filterTable() { applyFilter(); }
+
+    // ── Sort ──
+    function sortTable(key) {
+        if (sortKey === key) sortAsc = !sortAsc;
+        else { sortKey = key; sortAsc = true; }
+        document.querySelectorAll('th').forEach(th => th.classList.remove('sorted'));
+        applyFilter();
+    }
+
+    // ── Render Table ──
+    function renderTable(rows) {
+        const tbody = document.getElementById('studentsTableBody');
+        const count = document.getElementById('tableCount');
+
+        if (!rows.length) {
+            tbody.innerHTML = `<tr><td colspan="10"><div class="adm-empty"><i class="fas fa-inbox"></i><p>No records found.</p></div></td></tr>`;
+            if (count) count.textContent = '0 records';
+            return;
+        }
+
+        if (count) count.textContent = `${rows.length} record${rows.length !== 1 ? 's' : ''}`;
+
+        tbody.innerHTML = rows.map(r => `
+            <tr>
+                <td style="color:var(--text-muted); font-size:0.75rem;">${r.idx}</td>
+                <td class="td-name">${sanitize(r.fullName)}</td>
+                <td class="td-email">${sanitize(r.email)}</td>
+                <td>${sanitize(r.whatsapp)}</td>
+                <td style="max-width:140px; overflow:hidden; text-overflow:ellipsis;">${sanitize(r.course)}</td>
+                <td>${sanitize(r.city)}</td>
+                <td>${sanitize(r.paymentMethod)}</td>
+                <td>${statusBadge(r)}</td>
+                <td>${sanitize(r.ts)}</td>
+                <td>
+                    <div style="display:flex; gap:6px;">
+                        <button class="adm-btn adm-btn-sm adm-btn-ghost" onclick="openDetail('${r.id}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        ${r.isPending
+                            ? `<button class="adm-btn adm-btn-sm adm-btn-approve" onclick="updateStatus('${r.id}', 'active')"><i class="fas fa-check"></i></button>`
+                            : `<button class="adm-btn adm-btn-sm adm-btn-reject" onclick="updateStatus('${r.id}', 'rejected')"><i class="fas fa-times"></i></button>`
+                        }
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function statusBadge(r) {
+        if (r.isPending) return `<span class="s-badge pending">Pending</span>`;
+        if (r.status === 'active' || r.status === 'payment_confirmed') return `<span class="s-badge active">Active</span>`;
+        if (r.status === 'rejected') return `<span class="s-badge" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;">Rejected</span>`;
+        return `<span class="s-badge new">${sanitize(r.status)}</span>`;
+    }
+
+    // ── Update Status ──
+    async function updateStatus(docId, newStatus) {
+        try {
+            await db.collection('enrollments').doc(docId).update({
+                status: newStatus,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showToast(`Status updated to "${newStatus}"`, 'success');
+            await loadData();
+            closeModal();
+        } catch(err) {
+            showToast('Error: ' + err.message, 'error');
+        }
+    }
+
+    // ── Detail Modal ──
+    function openDetail(id) {
+        const r = allRows.find(x => x.id === id);
+        if (!r) return;
+
+        setText('modalName', r.fullName);
+
+        const modalStatus = document.getElementById('modalStatus');
+        if (modalStatus) modalStatus.innerHTML = statusBadge(r);
+
+        const fields = [
+            { label: 'Email',        value: r.email,         full: false },
+            { label: 'WhatsApp',     value: r.whatsapp,      full: false },
+            { label: 'Course',       value: r.course,        full: false },
+            { label: 'City',         value: r.city,          full: false },
+            { label: 'Occupation',   value: r.occupation,    full: false },
+            { label: 'Department',   value: r.department,    full: false },
+            { label: 'Payment Via',  value: r.paymentMethod, full: false },
+            { label: 'Enrollment Date', value: r.ts,         full: false },
+            { label: 'Referral',     value: r.referral,      full: true  },
+            { label: 'Doc ID',       value: r.id,            full: true  }
+        ];
+
+        const grid = document.getElementById('modalGrid');
+        if (grid) {
+            grid.innerHTML = fields.map(f => `
+                <div class="adm-detail-field${f.full ? ' full' : ''}">
+                    <div class="adm-detail-label">${f.label}</div>
+                    <div class="adm-detail-value">${sanitize(f.value)}</div>
+                </div>
+            `).join('');
+        }
+
+        const actions = document.getElementById('modalActions');
+        if (actions) {
+            actions.innerHTML = r.isPending
+                ? `<button class="adm-btn adm-btn-primary" onclick="updateStatus('${r.id}','active')"><i class="fas fa-check"></i> Approve Enrollment</button>
+                   <button class="adm-btn adm-btn-reject" onclick="updateStatus('${r.id}','rejected')"><i class="fas fa-times"></i> Reject</button>`
+                : `<button class="adm-btn adm-btn-ghost" onclick="updateStatus('${r.id}','pending_verification')"><i class="fas fa-undo"></i> Set to Pending</button>`;
+        }
+
+        document.getElementById('detailModal').classList.add('active');
+    }
+
+    function closeModal() {
+        document.getElementById('detailModal').classList.remove('active');
+    }
+    document.getElementById('detailModal').addEventListener('click', e => {
+        if (e.target === e.currentTarget) closeModal();
+    });
+
+    // ── Switch View (sidebar) ──
+    function switchView(view, el) {
+        currentView = view;
+        document.querySelectorAll('.adm-nav-item').forEach(i => i.classList.remove('active'));
+        if (el) el.classList.add('active');
+        const titles = { students: 'All Enrollments', pending: 'Pending Verification', active: 'Active Students' };
+        setText('viewTitle',  titles[view] || 'Students');
+        setText('tableTitle', titles[view] || 'Students');
+        applyFilter();
+    }
+
+    // ── CSV Export ──
+    function exportCSV() {
+        const rows = filteredRows.length ? filteredRows : allRows;
+        if (!rows.length) { showToast('No data to export.', 'error'); return; }
+
+        const headers = ['#','Name','Email','WhatsApp','Course','City','Occupation','Department','Payment','Status','Date'];
+        const csv = [headers.join(',')];
+
+        rows.forEach((r,i) => {
+            const vals = [
+                i + 1, r.fullName, r.email, r.whatsapp, r.course,
+                r.city, r.occupation, r.department, r.paymentMethod, r.status, r.ts
+            ].map(v => `"${String(v ?? '').replace(/"/g, '""')}"`);
+            csv.push(vals.join(','));
+        });
+
+        const blob = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = `ZCP_Students_${new Date().toLocaleDateString('en-PK').replace(/\//g,'-')}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast(`Exported ${rows.length} records`, 'success');
+    }
+
+    // ── Toast ──
+    function showToast(msg, type = 'success') {
+        const toast = document.getElementById('toast');
+        const msgEl = document.getElementById('toastMsg');
+        toast.className = `adm-toast ${type}`;
+        toast.querySelector('i').className = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+        if (msgEl) msgEl.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    function updateLastUpdated() {
+        const el = document.getElementById('lastUpdated');
+        if (el) el.textContent = 'Updated ' + new Date().toLocaleTimeString('en-PK', { hour:'2-digit', minute:'2-digit' });
+    }
+
+    // ── Helpers ──
+    function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+    function sanitize(str) {
+        return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+    </script>
+</body>
+</html>
