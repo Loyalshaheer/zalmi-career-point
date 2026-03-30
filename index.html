@@ -911,12 +911,22 @@
                     </div>
                     <div class="pd-payment-info">
                         <div id="methodDetails">
-                            <div class="pd-detail-row"><span class="pd-detail-label">Account Title</span><span class="pd-detail-value" id="accountTitle">Loyal Shaheer</span></div>
-                            <div class="pd-detail-row"><span class="pd-detail-label">Account Number</span><span class="pd-detail-value" id="accountNumber">0333 4747734</span></div>
+                            <div class="pd-detail-row"><span class="pd-detail-label">Account Title</span><span class="pd-detail-value" id="accountTitle">Johar Hussain</span></div>
+                            <div class="pd-detail-row"><span class="pd-detail-label">Account Number</span><span class="pd-detail-value" id="accountNumber">03420932464</span></div>
                             <div class="pd-detail-row"><span class="pd-detail-label">Amount Due</span><span class="pd-detail-value amber" id="amountDue">Rs 3,000</span></div>
                         </div>
-                        <p style="font-size:.82rem; color:var(--text-muted); margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border);">
-                            <i class="fas fa-info-circle" style="color:var(--amber); margin-right:4px;"></i>Once paid, click the button below. Our team will verify your transaction manually.
+                        
+                        <!-- Receipt Upload Group -->
+                        <div style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid var(--border-light);">
+                            <label style="display:block; font-size:.85rem; font-weight:700; color:var(--text-primary); margin-bottom:.5rem;">
+                                <i class="fas fa-file-upload" style="color:var(--amber);"></i> Upload Payment Receipt
+                            </label>
+                            <input type="file" id="paymentReceipt" accept="image/*,.pdf" style="width:100%; font-size:.82rem; color:var(--text-muted); background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:.6rem; border-radius:8px;">
+                            <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.4rem;">Upload a screenshot of your transaction (Max 2MB).</p>
+                        </div>
+
+                        <p style="font-size:.82rem; color:var(--text-muted); margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border-light);">
+                            <i class="fas fa-info-circle" style="color:var(--amber); margin-right:4px;"></i>Once paid/uploaded, click confirm. Our team will verify it manually.
                         </p>
                     </div>
                     <button id="confirmPaymentBtn" type="button" class="pd-btn-primary" style="width:100%; margin-top:1.5rem; padding:1rem; font-size:1rem; justify-content:center;">
@@ -965,10 +975,10 @@
         </div>
     </footer>
 
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
     <script src="script.js"></script>
 
     <script>

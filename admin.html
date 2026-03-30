@@ -614,6 +614,7 @@
                                 <th onclick="sortTable('course')">Course <span class="sort-icon">↕</span></th>
                                 <th onclick="sortTable('city')">City <span class="sort-icon">↕</span></th>
                                 <th onclick="sortTable('paymentMethod')">Payment <span class="sort-icon">↕</span></th>
+                                <th>Receipt</th>
                                 <th onclick="sortTable('status')">Status <span class="sort-icon">↕</span></th>
                                 <th onclick="sortTable('ts')">Date <span class="sort-icon">↕</span></th>
                                 <th>Actions</th>
@@ -1008,6 +1009,7 @@
                     department:    d.department    || '—',
                     referral:      d.referral      || '—',
                     paymentMethod: d.paymentMethod || '—',
+                    receiptUrl:    d.receiptUrl    || null,
                     status:        d.status        || 'form_submitted',
                     paymentStatus: d.paymentStatus || '—',
                     isPending,
@@ -1133,6 +1135,14 @@
                 <td style="max-width:140px; overflow:hidden; text-overflow:ellipsis;">${sanitize(r.course)}</td>
                 <td>${sanitize(r.city)}</td>
                 <td>${sanitize(r.paymentMethod)}</td>
+                <td>
+                    ${r.receiptUrl 
+                        ? `<a href="${r.receiptUrl}" target="_blank" class="adm-btn adm-btn-sm adm-btn-ghost" title="View Receipt" style="color:var(--amber); border-color:var(--amber-dim);">
+                             <i class="fas fa-receipt"></i>
+                           </a>` 
+                        : '<span style="opacity:0.2;">—</span>'
+                    }
+                </td>
                 <td>${statusBadge(r)}</td>
                 <td>${sanitize(r.ts)}</td>
                 <td>
@@ -1202,6 +1212,7 @@
             { label: 'Occupation',   value: r.occupation,    full: false },
             { label: 'Department',   value: r.department,    full: false },
             { label: 'Payment Via',  value: r.paymentMethod, full: false },
+            { label: 'Receipt',      value: r.receiptUrl ? `<a href="${r.receiptUrl}" target="_blank" style="color:var(--amber); font-weight:700;">View Payment Receipt <i class="fas fa-external-link-alt"></i></a>` : 'No receipt uploaded', full: false },
             { label: 'Enrollment Date', value: r.ts,         full: false },
             { label: 'Referral',     value: r.referral,      full: true  },
             { label: 'Doc ID',       value: r.id,            full: true  }

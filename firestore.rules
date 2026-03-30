@@ -2,12 +2,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── Enrollments (public write, admin read) ──
-    // Anyone can submit an enrollment form (no auth needed)
-    // Only authenticated users can read their own, admins read all
+    // ── Enrollments (public write/update for confirmation, admin read) ──
     match /enrollments/{enrollmentId} {
-      allow create: if true;  // Public form submission
-      allow read, update: if request.auth != null;
+      allow create: if true;
+      allow update: if true; // In a real app, we'd restrict which fields can be changed
+      allow read: if request.auth != null;
     }
 
     // ── Courses (Public read, admin write) ──

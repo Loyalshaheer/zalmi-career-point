@@ -16,8 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
-    const auth = firebase.auth();
-    const db   = firebase.firestore();
+    const auth    = firebase.auth();
+    const db      = firebase.firestore();
+    const storage = firebase.storage();
 
     // Admin emails — full access to Admin Console
     const ADMIN_EMAILS = [
@@ -226,18 +227,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (confirmPayBtn) {
         confirmPayBtn.addEventListener('click', async () => {
-            const docId  = localStorage.getItem('pendingEnrollmentId');
-            const method = document.querySelector('.pd-method-card.active, .payment-method-card.active')?.dataset.method || 'unknown';
+            const docId   = localStorage.getItem('pendingEnrollmentId');
+            const fileEl  = document.getElementById('paymentReceipt');
+            const method  = document.querySelector('.pd-method-card.active, .payment-method-card.active')?.dataset.method || 'unknown';
 
             if (!docId) { alert('Session expired. Please fill the form again.'); return; }
 
             confirmPayBtn.disabled = true;
             const origHtml = confirmPayBtn.innerHTML;
-            confirmPayBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Confirming...';
+            confirmPayBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
             try {
+                let receiptUrl = null;
+
+                // 1. Handle Receipt Upload if file exists
+                if (fileEl && fileEl.files[0]) {
+                    const file = fileEl.files[0];
+                    if (file.size > 2 * 1024 * 1024) throw new Error('File size too large (Max 2MB)');
+                    
+                    const fileRef = storage.ref(`enrollments/receipts/${docId}_${Date.now()}`);
+                    const uploadTask = await fileRef.put(file);
+                    receiptUrl = await uploadTask.ref.getDownloadURL();
+                }
+
+                // 2. Update Firestore
                 await db.collection('enrollments').doc(docId).update({
                     paymentMethod:  method,
+                    receiptUrl:     receiptUrl,
                     status:         'payment_confirmed',
                     paymentStatus:  'pending_verification',
                     confirmedAt:    firebase.firestore.FieldValue.serverTimestamp()
