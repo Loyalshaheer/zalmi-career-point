@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const enrollForm     = document.getElementById('enrollmentForm');
     const paymentStep    = document.getElementById('paymentStep');
     const formSuccess    = document.getElementById('formSuccess');
-    const confirmPayBtn  = document.getElementById('confirmPayment');
+    const confirmPayBtn  = document.getElementById('confirmPaymentBtn');
 
     if (enrollForm) {
         enrollForm.addEventListener('submit', async function(e) {
