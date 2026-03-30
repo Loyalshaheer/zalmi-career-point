@@ -593,33 +593,26 @@
                 </div>
             </div>
 
-            <!-- Course Management Table (Hidden by default) -->
+            <!-- Course Management Section (Hidden by default) -->
             <div id="courseManagementSection" style="display: none;">
-                <div class="adm-table-section">
-                    <div class="adm-table-header">
-                        <div class="adm-table-title">Manage Programs</div>
-                        <button class="adm-btn adm-btn-primary" onclick="openCourseModal()">
-                            <i class="fas fa-plus"></i> Launch New Course
-                        </button>
+
+                <!-- Header bar -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; flex-wrap:wrap; gap:1rem;">
+                    <div>
+                        <div style="font-size:0.72rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--amber); margin-bottom:4px;">Course Manager</div>
+                        <div style="font-size:1.3rem; font-weight:700; color:var(--text-primary);">Live Batches &amp; Programs</div>
+                        <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">Changes here update the website instantly.</div>
                     </div>
-                    <div class="adm-table-wrap">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Image</th>
-                                    <th>Course Title</th>
-                                    <th>Starting</th>
-                                    <th>Timing</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="coursesTableBody">
-                                <!-- Populated by JS -->
-                            </tbody>
-                        </table>
-                    </div>
+                    <button class="adm-btn adm-btn-primary" onclick="openCourseModal()" style="gap:8px; padding:0.75rem 1.5rem; font-size:0.9rem;">
+                        <i class="fas fa-plus"></i> Launch New Batch
+                    </button>
                 </div>
+
+                <!-- Cards Grid -->
+                <div id="coursesCardsGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:1.5rem;">
+                    <!-- Populated by JS -->
+                </div>
+
             </div>
 
         </div>
@@ -641,56 +634,117 @@
 
     <!-- Course Add/Edit Modal -->
     <div class="adm-modal-overlay" id="courseModal">
-        <div class="adm-modal" style="max-width: 700px;">
-            <button class="adm-modal-close" onclick="closeCourseModal()"><i class="fas fa-times"></i></button>
-            <h2 id="courseModalTitle" style="margin-bottom: 1.5rem;">Launch New Course</h2>
-            <form id="courseForm" onsubmit="handleCourseSubmit(event)">
+        <div class="adm-modal" style="max-width:760px; padding:0; overflow:hidden;">
+
+            <!-- Modal Header -->
+            <div style="padding:1.75rem 2rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--bg-surface);">
+                <div>
+                    <div style="font-size:0.68rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--amber); margin-bottom:2px;">Course Manager</div>
+                    <h2 id="courseModalTitle" style="font-size:1.3rem; font-weight:700; color:var(--text-primary); letter-spacing:-0.02em;">Launch New Batch</h2>
+                </div>
+                <button class="adm-modal-close" onclick="closeCourseModal()" style="position:static;"><i class="fas fa-times"></i></button>
+            </div>
+
+            <!-- Image Preview -->
+            <div id="cImagePreviewWrap" style="height:160px; background:var(--bg-card); border-bottom:1px solid var(--border); overflow:hidden; position:relative;">
+                <img id="cImagePreview" src="" alt="" style="width:100%; height:100%; object-fit:cover; display:none; opacity:0.6;">
+                <div id="cImagePlaceholder" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; color:var(--text-muted);">
+                    <i class="fas fa-image" style="font-size:2rem;"></i>
+                    <span style="font-size:0.8rem;">Banner preview will appear here</span>
+                </div>
+            </div>
+
+            <form id="courseForm" onsubmit="handleCourseSubmit(event)" style="padding:2rem; max-height:60vh; overflow-y:auto;">
                 <input type="hidden" id="courseEditId">
-                <div class="adm-detail-grid">
-                    <div class="adm-detail-field full">
-                        <label class="adm-detail-label">Course Title</label>
-                        <input type="text" id="cTitle" required style="width:100%; padding:10px; border-radius:8px; background:var(--bg-surface); border:1px solid var(--border); color:white;">
+
+                <!-- Row 1: Title -->
+                <div style="margin-bottom:1.25rem;">
+                    <label class="adm-detail-label" style="display:block; margin-bottom:6px;">Course / Batch Title *</label>
+                    <input type="text" id="cTitle" required placeholder="e.g. Content Creation with AI — Batch 3"
+                        style="width:100%; padding:0.8rem 1rem; border-radius:10px; background:var(--bg-surface); border:1px solid var(--border); color:var(--text-primary); font-family:inherit; font-size:0.95rem; outline:none; transition:border-color 0.2s;"
+                        onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='var(--border)'">
+                </div>
+
+                <!-- Row 2: Image URL -->
+                <div style="margin-bottom:1.25rem;">
+                    <label class="adm-detail-label" style="display:block; margin-bottom:6px;">Banner Image URL *</label>
+                    <input type="url" id="cImage" required placeholder="https://images.unsplash.com/..."
+                        style="width:100%; padding:0.8rem 1rem; border-radius:10px; background:var(--bg-surface); border:1px solid var(--border); color:var(--text-primary); font-family:inherit; font-size:0.95rem; outline:none; transition:border-color 0.2s;"
+                        onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='var(--border)'"
+                        oninput="updateImagePreview(this.value)">
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Paste any image URL — Unsplash, Google Drive (direct), etc.</div>
+                </div>
+
+                <!-- Row 3: Start + Timing -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.25rem;">
+                    <div>
+                        <label class="adm-detail-label" style="display:block; margin-bottom:6px;">Batch Start *</label>
+                        <input type="text" id="cStart" placeholder="e.g. April 5, 2026" required
+                            style="width:100%; padding:0.8rem 1rem; border-radius:10px; background:var(--bg-surface); border:1px solid var(--border); color:var(--text-primary); font-family:inherit; font-size:0.9rem; outline:none;"
+                            onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='var(--border)'">
                     </div>
-                    <div class="adm-detail-field full">
-                        <label class="adm-detail-label">Image URL</label>
-                        <input type="url" id="cImage" required placeholder="https://..." style="width:100%; padding:10px; border-radius:8px; background:var(--bg-surface); border:1px solid var(--border); color:white;">
-                    </div>
-                    <div class="adm-detail-field">
-                        <label class="adm-detail-label">Start Date/Text</label>
-                        <input type="text" id="cStart" placeholder="e.g. Oct 2026" required style="width:100%; padding:10px; border-radius:8px; background:var(--bg-surface); border:1px solid var(--border); color:white;">
-                    </div>
-                    <div class="adm-detail-field">
-                        <label class="adm-detail-label">Class Timing</label>
-                        <input type="text" id="cTiming" placeholder="e.g. 8 PM - 10 PM" required style="width:100%; padding:10px; border-radius:8px; background:var(--bg-surface); border:1px solid var(--border); color:white;">
-                    </div>
-                    <div class="adm-detail-field full">
-                        <label class="adm-detail-label">Eligibility / Short Info</label>
-                        <input type="text" id="cEligibility" placeholder="e.g. Open for all" required style="width:100%; padding:10px; border-radius:8px; background:var(--bg-surface); border:1px solid var(--border); color:white;">
-                    </div>
-                    <div class="adm-detail-field full">
-                        <label class="adm-detail-label">Full Description</label>
-                        <textarea id="cDesc" rows="4" style="width:100%; padding:10px; border-radius:8px; background:var(--bg-surface); border:1px solid var(--border); color:white;"></textarea>
-                    </div>
-                    <div class="adm-detail-field">
-                        <label class="adm-detail-label">Price (PKR)</label>
-                        <input type="text" id="cPrice" placeholder="e.g. 5,000" required style="width:100%; padding:10px; border-radius:8px; background:var(--bg-surface); border:1px solid var(--border); color:white;">
-                    </div>
-                    <div class="adm-detail-field">
-                        <label class="adm-detail-label">Original Price (For Strike)</label>
-                        <input type="text" id="cPriceOld" placeholder="e.g. 10,000" style="width:100%; padding:10px; border-radius:8px; background:var(--bg-surface); border:1px solid var(--border); color:white;">
-                    </div>
-                    <div class="adm-detail-field">
-                        <label class="adm-detail-label">Status</label>
-                        <select id="cStatus" style="width:100%; padding:10px; border-radius:8px; background:var(--bg-surface); border:1px solid var(--border); color:white;">
-                            <option value="live">Live / Accepting Enrollments</option>
-                            <option value="draft">Draft / Hidden</option>
-                            <option value="closed">Closed / Fully Booked</option>
-                        </select>
+                    <div>
+                        <label class="adm-detail-label" style="display:block; margin-bottom:6px;">Class Timing *</label>
+                        <input type="text" id="cTiming" placeholder="e.g. 8 PM – 10 PM (PKT)" required
+                            style="width:100%; padding:0.8rem 1rem; border-radius:10px; background:var(--bg-surface); border:1px solid var(--border); color:var(--text-primary); font-family:inherit; font-size:0.9rem; outline:none;"
+                            onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='var(--border)'">
                     </div>
                 </div>
-                <div style="margin-top: 2rem; display: flex; gap: 1rem;">
-                    <button type="submit" class="adm-btn adm-btn-primary">Save Course</button>
-                    <button type="button" class="adm-btn adm-btn-ghost" onclick="closeCourseModal()">Cancel</button>
+
+                <!-- Row 4: Price + Old Price -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.25rem;">
+                    <div>
+                        <label class="adm-detail-label" style="display:block; margin-bottom:6px;">Fee (PKR) *</label>
+                        <input type="text" id="cPrice" placeholder="e.g. 5000" required
+                            style="width:100%; padding:0.8rem 1rem; border-radius:10px; background:var(--bg-surface); border:1px solid var(--border); color:var(--text-primary); font-family:inherit; font-size:0.9rem; outline:none;"
+                            onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='var(--border)'">
+                    </div>
+                    <div>
+                        <label class="adm-detail-label" style="display:block; margin-bottom:6px;">Original Price (Strikethrough)</label>
+                        <input type="text" id="cPriceOld" placeholder="e.g. 10000"
+                            style="width:100%; padding:0.8rem 1rem; border-radius:10px; background:var(--bg-surface); border:1px solid var(--border); color:var(--text-primary); font-family:inherit; font-size:0.9rem; outline:none;"
+                            onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='var(--border)'">
+                    </div>
+                </div>
+
+                <!-- Row 5: Short Description -->
+                <div style="margin-bottom:1.25rem;">
+                    <label class="adm-detail-label" style="display:block; margin-bottom:6px;">Short Description (shown on course card) *</label>
+                    <input type="text" id="cEligibility" placeholder="e.g. Master AI content tools and start earning in 60 days" required
+                        style="width:100%; padding:0.8rem 1rem; border-radius:10px; background:var(--bg-surface); border:1px solid var(--border); color:var(--text-primary); font-family:inherit; font-size:0.9rem; outline:none;"
+                        onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='var(--border)'">
+                </div>
+
+                <!-- Row 6: Full Description -->
+                <div style="margin-bottom:1.25rem;">
+                    <label class="adm-detail-label" style="display:block; margin-bottom:6px;">Full Description (optional)</label>
+                    <textarea id="cDesc" rows="3" placeholder="Add more details about this course..."
+                        style="width:100%; padding:0.8rem 1rem; border-radius:10px; background:var(--bg-surface); border:1px solid var(--border); color:var(--text-primary); font-family:inherit; font-size:0.9rem; outline:none; resize:vertical;"
+                        onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+                </div>
+
+                <!-- Row 7: Status -->
+                <div style="margin-bottom:2rem;">
+                    <label class="adm-detail-label" style="display:block; margin-bottom:8px;">Batch Status *</label>
+                    <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                        <label style="display:flex; align-items:center; gap:8px; padding:0.65rem 1.25rem; border-radius:10px; border:1px solid var(--border); cursor:pointer; background:var(--bg-surface); transition:0.2s;" id="statusLiveLbl">
+                            <input type="radio" name="cStatus" id="cStatusLive" value="live" style="accent-color:var(--amber);"> <i class="fas fa-broadcast-tower" style="color:#4ade80;"></i> <span style="font-size:0.88rem; font-weight:600;">Live — Accepting Enrollments</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:8px; padding:0.65rem 1.25rem; border-radius:10px; border:1px solid var(--border); cursor:pointer; background:var(--bg-surface); transition:0.2s;" id="statusDraftLbl">
+                            <input type="radio" name="cStatus" id="cStatusDraft" value="draft" style="accent-color:var(--amber);"> <i class="fas fa-eye-slash" style="color:var(--amber);"></i> <span style="font-size:0.88rem; font-weight:600;">Draft — Hidden from site</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:8px; padding:0.65rem 1.25rem; border-radius:10px; border:1px solid var(--border); cursor:pointer; background:var(--bg-surface); transition:0.2s;" id="statusClosedLbl">
+                            <input type="radio" name="cStatus" id="cStatusClosed" value="closed" style="accent-color:var(--amber);"> <i class="fas fa-lock" style="color:#f87171;"></i> <span style="font-size:0.88rem; font-weight:600;">Closed — Fully Booked</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Footer Buttons -->
+                <div style="display:flex; gap:0.75rem; padding-top:1.25rem; border-top:1px solid var(--border);">
+                    <button type="submit" class="adm-btn adm-btn-primary" id="courseSubmitBtn" style="flex:1;">
+                        <i class="fas fa-rocket"></i> <span id="courseSubmitText">Launch Batch</span>
+                    </button>
+                    <button type="button" class="adm-btn adm-btn-ghost" onclick="closeCourseModal()" style="padding:0.75rem 1.5rem;">Cancel</button>
                 </div>
             </form>
         </div>
@@ -1036,39 +1090,89 @@
     }
 
     function renderCoursesTable() {
-        const tbody = document.getElementById('coursesTableBody');
-        if (!tbody) return;
+        const grid = document.getElementById('coursesCardsGrid');
+        if (!grid) return;
 
         if (!allCourses.length) {
-            tbody.innerHTML = `<tr><td colspan="6"><div class="adm-empty"><p>No courses found. Launch your first course!</p></div></td></tr>`;
+            grid.innerHTML = `
+                <div style="grid-column:1/-1; text-align:center; padding:4rem; opacity:0.5;">
+                    <i class="fas fa-rocket" style="font-size:2.5rem; color:var(--amber); margin-bottom:1rem; display:block;"></i>
+                    <p style="font-size:1.1rem; font-weight:600;">No batches yet.</p>
+                    <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Click "Launch New Batch" to publish your first course.</p>
+                </div>`;
             return;
         }
 
-        tbody.innerHTML = allCourses.map(c => `
-            <tr>
-                <td><img src="${sanitize(c.imageUrl)}" style="height:40px; width:70px; object-fit:cover; border-radius:6px; border:1px solid var(--border);"></td>
-                <td class="td-name">${sanitize(c.title)}</td>
-                <td>${sanitize(c.startTime)}</td>
-                <td>${sanitize(c.timing)}</td>
-                <td><span class="s-badge ${c.status === 'live' ? 'active' : 'pending'}">${sanitize(c.status)}</span></td>
-                <td>
-                    <div style="display:flex; gap:6px;">
-                        <button class="adm-btn adm-btn-sm adm-btn-ghost" onclick="editCourse('${c.id}')">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="adm-btn adm-btn-sm adm-btn-reject" onclick="deleteCourse('${c.id}')">
-                            <i class="fas fa-trash"></i>
-                        </button>
+        const statusColor = { live: '#4ade80', draft: 'var(--amber)', closed: '#f87171' };
+        const statusIcon  = { live: 'fa-broadcast-tower', draft: 'fa-eye-slash', closed: 'fa-lock' };
+        const statusLabel = { live: 'Live', draft: 'Draft', closed: 'Closed' };
+
+        grid.innerHTML = allCourses.map(c => `
+            <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:18px; overflow:hidden; transition:border-color 0.2s, transform 0.2s;"
+                 onmouseover="this.style.borderColor='var(--border-amber)'; this.style.transform='translateY(-3px)';"
+                 onmouseout="this.style.borderColor='var(--border)'; this.style.transform='translateY(0)';">
+
+                <!-- Banner -->
+                <div style="height:160px; background:var(--bg-surface); position:relative; overflow:hidden;">
+                    ${c.imageUrl ? `<img src="${sanitize(c.imageUrl)}" alt="${sanitize(c.title)}" style="width:100%; height:100%; object-fit:cover; opacity:0.85;">` : `<div style="display:flex; align-items:center; justify-content:center; height:100%; color:var(--text-muted);"><i class="fas fa-image fa-2x"></i></div>`}
+                    <div style="position:absolute; top:12px; right:12px; display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.7); border:1px solid ${statusColor[c.status] || 'var(--border)'}; color:${statusColor[c.status] || 'white'}; padding:4px 10px; border-radius:100px; font-size:0.72rem; font-weight:700; backdrop-filter:blur(8px);">
+                        <i class="fas ${statusIcon[c.status] || 'fa-circle'}"></i> ${statusLabel[c.status] || c.status}
                     </div>
-                </td>
-            </tr>
+                </div>
+
+                <!-- Body -->
+                <div style="padding:1.25rem 1.5rem;">
+                    <div style="font-size:1.1rem; font-weight:700; color:var(--text-primary); margin-bottom:0.5rem; line-height:1.3;">${sanitize(c.title)}</div>
+                    <div style="font-size:0.82rem; color:var(--text-muted); line-height:1.5; margin-bottom:1rem;">${sanitize(c.eligibility || c.description || '—')}</div>
+
+                    <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1rem;">
+                        <div style="display:flex; align-items:center; gap:6px; font-size:0.78rem; color:var(--text-secondary);">
+                            <i class="fas fa-calendar-alt" style="color:var(--amber);"></i> ${sanitize(c.startTime || '—')}
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px; font-size:0.78rem; color:var(--text-secondary);">
+                            <i class="fas fa-clock" style="color:var(--amber);"></i> ${sanitize(c.timing || '—')}
+                        </div>
+                    </div>
+
+                    <div style="display:flex; align-items:center; justify-content:space-between; padding-top:1rem; border-top:1px solid var(--border);">
+                        <div>
+                            <span style="font-size:1.2rem; font-weight:700; color:var(--amber);">Rs ${sanitize(c.price || '—')}</span>
+                            ${c.priceOld ? `<span style="font-size:0.8rem; color:var(--text-muted); text-decoration:line-through; margin-left:6px;">Rs ${sanitize(c.priceOld)}</span>` : ''}
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <button class="adm-btn adm-btn-sm adm-btn-ghost" onclick="editCourse('${c.id}')" title="Edit">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button class="adm-btn adm-btn-sm adm-btn-reject" onclick="deleteCourse('${c.id}')" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         `).join('');
     }
 
+    function updateImagePreview(url) {
+        const img = document.getElementById('cImagePreview');
+        const placeholder = document.getElementById('cImagePlaceholder');
+        if (url && url.startsWith('http')) {
+            img.src = url;
+            img.style.display = 'block';
+            if (placeholder) placeholder.style.display = 'none';
+        } else {
+            img.style.display = 'none';
+            if (placeholder) placeholder.style.display = 'flex';
+        }
+    }
+
     function openCourseModal() {
-        document.getElementById('courseModalTitle').textContent = 'Launch New Course';
+        document.getElementById('courseModalTitle').textContent = 'Launch New Batch';
+        document.getElementById('courseSubmitText').textContent = 'Launch Batch';
         document.getElementById('courseEditId').value = '';
         document.getElementById('courseForm').reset();
+        document.getElementById('cStatusLive').checked = true;
+        updateImagePreview('');
         document.getElementById('courseModal').classList.add('active');
     }
 
@@ -1079,31 +1183,42 @@
     async function handleCourseSubmit(e) {
         e.preventDefault();
         const id = document.getElementById('courseEditId').value;
+        const statusVal = document.querySelector('input[name="cStatus"]:checked')?.value || 'live';
+        const btn = document.getElementById('courseSubmitBtn');
+        const btnText = document.getElementById('courseSubmitText');
+
         const data = {
-            title:       document.getElementById('cTitle').value,
-            imageUrl:    document.getElementById('cImage').value,
-            startTime:   document.getElementById('cStart').value,
-            timing:      document.getElementById('cTiming').value,
-            eligibility: document.getElementById('cEligibility').value,
-            description: document.getElementById('cDesc').value,
-            price:       document.getElementById('cPrice').value,
-            priceOld:    document.getElementById('cPriceOld').value,
-            status:      document.getElementById('cStatus').value,
-            createdAt:   firebase.firestore.FieldValue.serverTimestamp()
+            title:       document.getElementById('cTitle').value.trim(),
+            imageUrl:    document.getElementById('cImage').value.trim(),
+            startTime:   document.getElementById('cStart').value.trim(),
+            timing:      document.getElementById('cTiming').value.trim(),
+            eligibility: document.getElementById('cEligibility').value.trim(),
+            description: document.getElementById('cDesc').value.trim(),
+            price:       document.getElementById('cPrice').value.trim(),
+            priceOld:    document.getElementById('cPriceOld').value.trim(),
+            status:      statusVal,
+            updatedAt:   firebase.firestore.FieldValue.serverTimestamp()
         };
+        if (!id) data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+
+        btn.disabled = true;
+        btnText.textContent = 'Saving...';
 
         try {
             if (id) {
                 await db.collection('courses').doc(id).update(data);
-                showToast('Course updated successfully', 'success');
+                showToast('✅ Batch updated! Site reflects changes in seconds.', 'success');
             } else {
                 await db.collection('courses').add(data);
-                showToast('New course launched!', 'success');
+                showToast('🚀 New batch is now live on the website!', 'success');
             }
             closeCourseModal();
             loadCourses();
         } catch(err) {
             showToast('Error: ' + err.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btnText.textContent = id ? 'Save Changes' : 'Launch Batch';
         }
     }
 
@@ -1111,7 +1226,8 @@
         const c = allCourses.find(x => x.id === id);
         if (!c) return;
 
-        document.getElementById('courseModalTitle').textContent = 'Edit Course';
+        document.getElementById('courseModalTitle').textContent = 'Edit Batch';
+        document.getElementById('courseSubmitText').textContent = 'Save Changes';
         document.getElementById('courseEditId').value = c.id;
         document.getElementById('cTitle').value = c.title || '';
         document.getElementById('cImage').value = c.imageUrl || '';
@@ -1121,8 +1237,12 @@
         document.getElementById('cDesc').value = c.description || '';
         document.getElementById('cPrice').value = c.price || '';
         document.getElementById('cPriceOld').value = c.priceOld || '';
-        document.getElementById('cStatus').value = c.status || 'live';
 
+        // Set status radio
+        const radioId = { live: 'cStatusLive', draft: 'cStatusDraft', closed: 'cStatusClosed' }[c.status] || 'cStatusLive';
+        document.getElementById(radioId).checked = true;
+
+        updateImagePreview(c.imageUrl || '');
         document.getElementById('courseModal').classList.add('active');
     }
 
