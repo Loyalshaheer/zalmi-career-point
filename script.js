@@ -53,11 +53,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================================
     //  MOBILE MENU (Landing Page)
     // ============================================================
+    const mobileBtn = document.querySelector('.mobile-menu-btn');
+    const navLinks  = document.querySelector('.pd-nav-links');
+    
     if (mobileBtn && navLinks) {
         mobileBtn.addEventListener('click', () => {
             navLinks.classList.toggle('active');
-            mobileBtn.querySelector('i').classList.toggle('fa-bars');
-            mobileBtn.querySelector('i').classList.toggle('fa-times');
+            const icon = mobileBtn.querySelector('i');
+            if (icon) {
+                icon.classList.toggle('fa-bars');
+                icon.classList.toggle('fa-times');
+            }
         });
     }
 
@@ -72,16 +78,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!container && !select) return;
 
         try {
-            const snap = await db.collection('courses').where('status', '==', 'live').get();
-            activeCourses = [];
-            snap.forEach(doc => activeCourses.push({ id: doc.id, ...doc.data() }));
+            // Fetch all courses to avoid index requirements and casing issues
+            const snap = await db.collection('courses').get();
+            const allFetched = [];
+            snap.forEach(doc => allFetched.push({ id: doc.id, ...doc.data() }));
 
-            // Sort by createdAt descending in JS (to avoid needing a Firestore composite index)
-            activeCourses.sort((a, b) => {
-                const da = a.createdAt?.seconds || 0;
-                const db = b.createdAt?.seconds || 0;
-                return db - da;
-            });
+            // Filter for 'live' (case-insensitive) and sort by date in JS
+            activeCourses = allFetched
+                .filter(c => String(c.status || '').toLowerCase() === 'live')
+                .sort((a, b) => {
+                    const da = a.createdAt?.seconds || 0;
+                    const db = b.createdAt?.seconds || 0;
+                    return db - da;
+                });
 
             // Render Cards on Landing Page
             if (container) {
