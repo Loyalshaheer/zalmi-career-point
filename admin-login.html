@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Access | Zalmi Career Point</title>
+    <!-- Prevent search engines from indexing this page -->
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-base: #030508;
+            --bg-surface: #0A0D14;
+            --bg-card: #0F1220;
+            --border: rgba(255,255,255,0.07);
+            --border-amber: rgba(245,158,11,0.4);
+            --amber: #F59E0B;
+            --amber-dim: rgba(245,158,11,0.08);
+            --text-primary: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #475569;
+            --red: #EF4444;
+            --red-dim: rgba(239,68,68,0.1);
+            --font: 'DM Sans', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg-base);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-font-smoothing: antialiased;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Background grid + glow */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(245,158,11,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(245,158,11,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            top: -200px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(245,158,11,0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* Card */
+        .admin-card {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 440px;
+            margin: 1rem;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 3rem 2.75rem;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.6), 0 0 0 1px rgba(245,158,11,0.06);
+        }
+
+        /* Shield Icon */
+        .shield-wrap {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        .shield-icon {
+            width: 72px;
+            height: 72px;
+            background: var(--amber-dim);
+            border: 1px solid var(--border-amber);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: var(--amber);
+            position: relative;
+        }
+        .shield-icon::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 20px;
+            box-shadow: 0 0 40px rgba(245,158,11,0.2);
+        }
+
+        /* Header */
+        .admin-card-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+        .admin-card-header h1 {
+            font-size: 1.65rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            letter-spacing: -0.03em;
+            margin-bottom: 0.5rem;
+        }
+        .admin-card-header h1 span { color: var(--amber); }
+        .admin-card-header p {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Restricted Banner */
+        .restricted-banner {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.2);
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            margin-bottom: 2rem;
+            font-size: 0.8rem;
+            color: #FCA5A5;
+        }
+        .restricted-banner i { color: var(--red); font-size: 0.9rem; flex-shrink: 0; }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        .form-label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        .input-wrap {
+            position: relative;
+        }
+        .input-wrap i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            transition: color 0.2s;
+            pointer-events: none;
+        }
+        .input-wrap input {
+            width: 100%;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0.9rem 1rem 0.9rem 2.8rem;
+            color: var(--text-primary);
+            font-family: var(--font);
+            font-size: 0.93rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+        }
+        .input-wrap input::placeholder { color: var(--text-muted); }
+        .input-wrap input:focus {
+            border-color: var(--border-amber);
+            background: var(--amber-dim);
+            box-shadow: 0 0 0 3px rgba(245,158,11,0.08);
+        }
+        .input-wrap input:focus + i { color: var(--amber); }
+
+        /* Toggle password visibility */
+        .input-wrap .toggle-pw {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: var(--text-muted);
+            background: none;
+            border: none;
+            padding: 0;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .input-wrap .toggle-pw:hover { color: var(--amber); }
+
+        /* Error message */
+        .error-msg {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.2);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.25rem;
+            font-size: 0.82rem;
+            color: #FCA5A5;
+        }
+        .error-msg.visible { display: flex; }
+        .error-msg i { font-size: 0.9rem; flex-shrink: 0; }
+
+        /* Submit Button */
+        .admin-submit-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #F59E0B, #D97706);
+            border: none;
+            border-radius: 12px;
+            color: #030508;
+            font-family: var(--font);
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 0.5rem;
+            box-shadow: 0 8px 24px rgba(245,158,11,0.25);
+            letter-spacing: 0.01em;
+        }
+        .admin-submit-btn:hover:not(:disabled) {
+            opacity: 0.92;
+            transform: translateY(-1px);
+            box-shadow: 0 12px 32px rgba(245,158,11,0.35);
+        }
+        .admin-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* Footer link */
+        .back-link {
+            display: flex;
+            justify-content: center;
+            margin-top: 1.75rem;
+        }
+        .back-link a {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s;
+        }
+        .back-link a:hover { color: var(--text-secondary); }
+
+        /* Loading spinner */
+        .fa-spinner { animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Fade-in animation */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .admin-card { animation: fadeUp 0.5s ease; }
+    </style>
+</head>
+<body>
+
+    <div class="admin-card">
+        <!-- Shield Icon -->
+        <div class="shield-wrap">
+            <div class="shield-icon">
+                <i class="fas fa-shield-halved"></i>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="admin-card-header">
+            <h1>Admin <span>Access</span></h1>
+            <p>This portal is restricted to authorized team members of Zalmi Career Point only.</p>
+        </div>
+
+        <!-- Restricted Notice -->
+        <div class="restricted-banner">
+            <i class="fas fa-lock"></i>
+            <span>Unauthorized access attempts are logged and reported.</span>
+        </div>
+
+        <!-- Error Message -->
+        <div class="error-msg" id="adminErrorMsg">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span id="adminErrorText">Invalid credentials or access denied.</span>
+        </div>
+
+        <!-- Login Form -->
+        <form id="adminLoginForm" autocomplete="on">
+            <div class="form-group">
+                <label class="form-label" for="adminEmail">Email Address</label>
+                <div class="input-wrap">
+                    <input
+                        type="email"
+                        id="adminEmail"
+                        name="email"
+                        placeholder="admin@zalmicareer.com"
+                        required
+                        autocomplete="email"
+                    >
+                    <i class="fas fa-envelope"></i>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="adminPassword">Password</label>
+                <div class="input-wrap">
+                    <input
+                        type="password"
+                        id="adminPassword"
+                        name="password"
+                        placeholder="Enter your password"
+                        required
+                        autocomplete="current-password"
+                    >
+                    <i class="fas fa-key"></i>
+                    <button type="button" class="toggle-pw" id="togglePw" title="Show/Hide password">
+                        <i class="fas fa-eye" id="togglePwIcon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="admin-submit-btn" id="adminSubmitBtn">
+                <i class="fas fa-shield-halved"></i>
+                <span id="adminBtnText">Access Admin Console</span>
+            </button>
+        </form>
+
+        <!-- Back Link -->
+        <div class="back-link">
+            <a href="index.html">
+                <i class="fas fa-arrow-left"></i>
+                Back to main site
+            </a>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script>
+        // ── FIREBASE CONFIG ──
+        const firebaseConfig = {
+            apiKey: "AIzaSyB4KG8r1XRpW60ZoYsYQnFGwYoadmDhFHg",
+            authDomain: "zalmi-career-point.firebaseapp.com",
+            projectId: "zalmi-career-point",
+            storageBucket: "zalmi-career-point.firebasestorage.app",
+            messagingSenderId: "137170146690",
+            appId: "1:137170146690:web:7f3ec8f2059e4b780a2b9b"
+        };
+
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // ── ADMIN EMAILS WHITELIST ──
+        const ADMIN_EMAILS = [
+            'loyalshaheer05@gmail.com',
+            'khan@gmail.com',
+            'shaheer@zalmicareer.com',
+            'admin@zalmicareer.com'
+        ];
+
+        // ── DOM ELEMENTS ──
+        const form       = document.getElementById('adminLoginForm');
+        const emailInput = document.getElementById('adminEmail');
+        const pwInput    = document.getElementById('adminPassword');
+        const submitBtn  = document.getElementById('adminSubmitBtn');
+        const btnText    = document.getElementById('adminBtnText');
+        const errorBox   = document.getElementById('adminErrorMsg');
+        const errorText  = document.getElementById('adminErrorText');
+        const togglePw   = document.getElementById('togglePw');
+        const toggleIcon = document.getElementById('togglePwIcon');
+
+        // Toggle password visibility
+        togglePw.addEventListener('click', () => {
+            const isHidden = pwInput.type === 'password';
+            pwInput.type = isHidden ? 'text' : 'password';
+            toggleIcon.className = isHidden ? 'fas fa-eye-slash' : 'fas fa-eye';
+        });
+
+        // Show error helper
+        function showError(msg) {
+            errorText.textContent = msg;
+            errorBox.classList.add('visible');
+        }
+        function hideError() {
+            errorBox.classList.remove('visible');
+        }
+
+        // If already logged in as admin, go straight to admin console
+        auth.onAuthStateChanged(user => {
+            if (user && ADMIN_EMAILS.includes(user.email)) {
+                window.location.href = 'admin.html';
+            }
+        });
+
+        // ── FORM SUBMIT ──
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError();
+
+            const email    = emailInput.value.trim();
+            const password = pwInput.value;
+
+            if (!email || !password) return;
+
+            // Set loading state
+            submitBtn.disabled = true;
+            btnText.textContent = 'Verifying...';
+            submitBtn.querySelector('i').className = 'fas fa-spinner';
+
+            try {
+                const { user } = await auth.signInWithEmailAndPassword(email, password);
+
+                // ─ CRITICAL: Check if this email is on the admin whitelist ─
+                if (!ADMIN_EMAILS.includes(user.email)) {
+                    // Not an admin — sign them out immediately
+                    await auth.signOut();
+                    showError('Access denied. This portal is for admin team only.');
+                    submitBtn.disabled = false;
+                    btnText.textContent = 'Access Admin Console';
+                    submitBtn.querySelector('i').className = 'fas fa-shield-halved';
+                    return;
+                }
+
+                // ✅ Verified admin → redirect
+                btnText.textContent = 'Access Granted!';
+                submitBtn.querySelector('i').className = 'fas fa-check';
+                setTimeout(() => {
+                    window.location.href = 'admin.html';
+                }, 600);
+
+            } catch (err) {
+                let msg = 'Login failed. Please check your credentials.';
+                if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+                    msg = 'Invalid email or password.';
+                } else if (err.code === 'auth/too-many-requests') {
+                    msg = 'Too many failed attempts. Try again later.';
+                } else if (err.code === 'auth/invalid-email') {
+                    msg = 'Please enter a valid email address.';
+                }
+                showError(msg);
+                submitBtn.disabled = false;
+                btnText.textContent = 'Access Admin Console';
+                submitBtn.querySelector('i').className = 'fas fa-shield-halved';
+            }
+        });
+    </script>
+</body>
+</html>

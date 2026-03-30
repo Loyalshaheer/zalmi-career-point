@@ -737,7 +737,7 @@
     // ── Auth Guard ──
     auth.onAuthStateChanged(user => {
         if (!user || !ADMIN_EMAILS.includes(user.email.toLowerCase())) {
-            window.location.href = 'login.html';
+            window.location.href = 'admin-login.html';
             return;
         }
         const name = user.email.split('@')[0];
@@ -749,7 +749,7 @@
 
     // ── Logout ──
     document.getElementById('logoutBtn').addEventListener('click', () => {
-        auth.signOut().then(() => window.location.href = 'index.html');
+        auth.signOut().then(() => window.location.href = 'admin-login.html');
     });
 
     // ── Load Data ──
