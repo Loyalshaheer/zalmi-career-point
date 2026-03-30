@@ -72,9 +72,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!container && !select) return;
 
         try {
-            const snap = await db.collection('courses').where('status', '==', 'live').orderBy('createdAt', 'desc').get();
+            const snap = await db.collection('courses').where('status', '==', 'live').get();
             activeCourses = [];
             snap.forEach(doc => activeCourses.push({ id: doc.id, ...doc.data() }));
+
+            // Sort by createdAt descending in JS (to avoid needing a Firestore composite index)
+            activeCourses.sort((a, b) => {
+                const da = a.createdAt?.seconds || 0;
+                const db = b.createdAt?.seconds || 0;
+                return db - da;
+            });
 
             // Render Cards on Landing Page
             if (container) {
