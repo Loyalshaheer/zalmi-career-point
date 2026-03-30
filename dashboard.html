@@ -42,17 +42,7 @@
             <ul>
                 <li class="nav-item active">
                     <a href="#" data-section="overview">
-                        <i class="fas fa-th-large"></i> <span>Overview</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" data-section="courses">
-                        <i class="fas fa-graduation-cap"></i> <span>My Courses</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" data-section="assignments">
-                        <i class="fas fa-tasks"></i> <span>Assignments</span>
+                        <i class="fas fa-th-large"></i> <span>My Programs</span>
                     </a>
                 </li>
                 <li class="nav-item admin-only" id="admin-portal-tab" style="display: none;">
@@ -75,12 +65,11 @@
         <header class="dashboard-header-premium">
             <div class="header-left">
                 <h2>Welcome, <span id="userName" class="text-gradient">Student</span>!</h2>
-                <p>Welcome back to your educational journey.</p>
+                <p id="userRoll" style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;"></p>
             </div>
             <div class="header-right">
                 <div class="user-meta">
-                    <strong id="displayFullName">Loading User...</strong>
-                    <span id="userRoll">Roll #ZCP-2026-***</span>
+                    <strong id="displayFullName"></strong>
                 </div>
                 <div class="user-avatar-circle">
                     <i class="fas fa-user-graduate"></i>
@@ -88,40 +77,14 @@
             </div>
         </header>
 
-        <!-- Dashboard Main Content -->
+        <!-- My Programs Section -->
         <div id="overview-section" class="dash-section active">
-            <div class="dashboard-grid-layout full-width">
-                <!-- Courses Preview -->
-                <section class="dash-block">
-                    <div class="block-header">
-                        <h3>My Current Programs</h3>
-                        <a href="#" class="accent-link" data-go-to="courses">View All <i class="fas fa-arrow-right"></i></a>
-                    </div>
-                    <div id="coursesContainer" class="dashboard-courses-list">
-                        <!-- Dynamic Course Cards (Handled by JS) -->
-                        <div class="loading-state">
-                            <i class="fas fa-circle-notch fa-spin"></i>
-                            <p>Initializing your dashboard...</p>
-                        </div>
-                    </div>
-                </section>
-            </div>
-        </div>
-
-        <!-- Courses Full View -->
-        <div id="courses-section" class="dash-section">
-            <h3 class="section-heading">Your Educational Curriculum</h3>
-            <div id="fullCoursesContainer" class="full-courses-grid">
-                <!-- Detailed courses list populated by script -->
-            </div>
-        </div>
-
-        <!-- Assignments Section -->
-        <div id="assignments-section" class="dash-section">
-            <h3 class="section-heading">Assignments & Assessments</h3>
-            <div class="empty-placeholder-card glass-card">
-                <i class="fas fa-inbox"></i>
-                <p>No pending assignments found. Check back soon!</p>
+            <div id="coursesContainer" class="dashboard-courses-list">
+                <!-- Dynamic Course Cards (Loaded by JS) -->
+                <div class="loading-state" style="grid-column: 1/-1; text-align: center; padding: 4rem; opacity: 0.5;">
+                    <i class="fas fa-circle-notch fa-spin" style="font-size: 2rem; display: block; margin-bottom: 1rem;"></i>
+                    <p>Loading your programs...</p>
+                </div>
             </div>
         </div>
     </main>
