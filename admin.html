@@ -541,13 +541,20 @@
                 <div class="adm-topbar-title" id="viewTitle">All Enrollments</div>
                 <div class="adm-topbar-sub">Real-time data from Firestore</div>
             </div>
-            <div class="adm-topbar-actions">
+            <div class="adm-topbar-actions" id="adminHeaderActions">
+                <!-- Student View Actions -->
                 <button id="refreshBtn" class="adm-btn adm-btn-ghost" onclick="loadData()">
                     <i class="fas fa-sync-alt"></i> Refresh
                 </button>
-                <button class="adm-btn adm-btn-primary" onclick="exportCSV()">
+                <button id="exportBtn" class="adm-btn adm-btn-primary" onclick="exportData()" style="background:var(--bg-surface); border:1px solid var(--border);">
                     <i class="fas fa-download"></i> Export CSV
                 </button>
+
+                <!-- Course View Actions (Hidden by default) -->
+                <button id="launchBatchBtn" class="adm-btn adm-btn-primary" onclick="openCourseModal()" style="display:none; background:var(--amber); color:black;">
+                    <i class="fas fa-plus"></i> Launch New Batch
+                </button>
+            </div>
             </div>
         </div>
 
@@ -634,16 +641,11 @@
             <!-- Course Management Section (Hidden by default) -->
             <div id="courseManagementSection" style="display: none;">
 
-                <!-- Header bar -->
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; flex-wrap:wrap; gap:1rem;">
-                    <div>
-                        <div style="font-size:0.72rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--amber); margin-bottom:4px;">Course Manager</div>
-                        <div style="font-size:1.3rem; font-weight:700; color:var(--text-primary);">Live Batches &amp; Programs</div>
-                        <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">Changes here update the website instantly.</div>
-                    </div>
-                    <button class="adm-btn adm-btn-primary" onclick="openCourseModal()" style="gap:8px; padding:0.75rem 1.5rem; font-size:0.9rem;">
-                        <i class="fas fa-plus"></i> Launch New Batch
-                    </button>
+                <!-- Header bar (Removed duplicate button, moved to top bar) -->
+                <div style="margin-bottom:2rem;">
+                    <div style="font-size:0.72rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--amber); margin-bottom:4px;">Course Manager</div>
+                    <div style="font-size:1.3rem; font-weight:700; color:var(--text-primary);">Live Batches &amp; Programs</div>
+                    <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">Changes here update the website instantly. Everyone who is enrolled will see these batches.</div>
                 </div>
 
                 <!-- Cards Grid -->
@@ -1284,24 +1286,42 @@
         if (el) el.classList.add('active');
 
         // Toggle sections
-        const isCourseView = view === 'courses';
-        const studentSection = document.querySelector('.adm-table-section'); 
-        const courseSection = document.getElementById('courseManagementSection');
-        const statsSection = document.querySelector('.adm-stats');
+        const isCourseView   = view === 'courses';
+        const studentTable   = document.querySelector('.adm-table-section'); 
+        const courseSection  = document.getElementById('courseManagementSection');
+        const statsSection   = document.querySelector('.adm-stats');
+        const searchBox     = document.querySelector('.adm-search');
+
+        // Buttons
+        const refreshBtn     = document.getElementById('refreshBtn');
+        const exportBtn      = document.getElementById('exportBtn');
+        const launchBatchBtn = document.getElementById('launchBatchBtn');
 
         if (isCourseView) {
-            if (studentSection) studentSection.style.display = 'none';
-            if (statsSection) statsSection.style.display = 'none';
-            if (courseSection) courseSection.style.display = 'block';
+            // Show Courses
+            if (studentTable)   studentTable.style.display = 'none';
+            if (statsSection)   statsSection.style.display = 'none';
+            if (courseSection)  courseSection.style.display = 'block';
+            
+            // Toggle Buttons
+            if (refreshBtn)     refreshBtn.style.display = 'none';
+            if (exportBtn)      exportBtn.style.display = 'none';
+            if (launchBatchBtn) launchBatchBtn.style.display = 'flex';
+
             setText('viewTitle', 'Course Management');
-            setText('tableTitle', 'Courses');
         } else {
-            if (studentSection) studentSection.style.display = 'block';
-            if (statsSection) statsSection.style.display = 'grid';
-            if (courseSection) courseSection.style.display = 'none';
+            // Show Students
+            if (studentTable)   studentTable.style.display = 'block';
+            if (statsSection)   statsSection.style.display = 'grid';
+            if (courseSection)  courseSection.style.display = 'none';
+
+            // Toggle Buttons
+            if (refreshBtn)     refreshBtn.style.display = 'flex';
+            if (exportBtn)      exportBtn.style.display = 'flex';
+            if (launchBatchBtn) launchBatchBtn.style.display = 'none';
+
             const titles = { students: 'All Enrollments', pending: 'Pending Verification', active: 'Active Students' };
             setText('viewTitle',  titles[view] || 'Students');
-            setText('tableTitle', titles[view] || 'Students');
             applyFilter();
         }
     }
