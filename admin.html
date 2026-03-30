@@ -441,6 +441,44 @@
         .adm-toast.success i { color: #4ade80; }
         .adm-toast.error { border-color: rgba(239,68,68,0.4); }
         .adm-toast.error i { color: #f87171; }
+
+        /* CONTENT MANAGER SPECIFIC */
+        .adm-content-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 1.5rem;
+        }
+        .adm-content-item {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: border-color 0.2s;
+        }
+        .adm-content-item:hover { border-color: var(--border-amber); }
+        .adm-content-icon {
+            width: 40px; height: 40px;
+            background: var(--amber-dim);
+            color: var(--amber);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .adm-content-info { flex: 1; min-width: 0; }
+        .adm-content-title { font-size: 0.9rem; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+        .adm-content-meta { font-size: 0.75rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .adm-content-delete {
+            opacity: 0;
+            transition: opacity 0.2s;
+            color: #f87171;
+            background: none; border: none; cursor: pointer; padding: 8px;
+        }
+        .adm-content-item:hover .adm-content-delete { opacity: 1; }
     </style>
 </head>
 <body>
@@ -747,6 +785,74 @@
                     <button type="button" class="adm-btn adm-btn-ghost" onclick="closeCourseModal()" style="padding:0.75rem 1.5rem;">Cancel</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Batch Content Manager Modal -->
+    <div class="adm-modal-overlay" id="batchContentModal">
+        <div class="adm-modal" style="max-width:800px; padding:0; overflow:hidden;">
+            <!-- Header -->
+            <div style="padding:1.75rem 2rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--bg-surface);">
+                <div>
+                    <div style="font-size:0.68rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--amber); margin-bottom:2px;">LMS Content</div>
+                    <h2 id="contentModalCourseTitle" style="font-size:1.3rem; font-weight:700; color:var(--text-primary); letter-spacing:-0.02em;">Manage Batch Content</h2>
+                </div>
+                <button class="adm-modal-close" onclick="closeContentModal()" style="position:static;"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:0;">
+                <!-- Existing Content List -->
+                <div style="padding:2rem; border-right:1px solid var(--border); max-height:70vh; overflow-y:auto; background:rgba(0,0,0,0.1);">
+                    <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:1rem;">Current Materials</div>
+                    <div id="contentList" class="adm-content-list">
+                        <!-- Populated by JS -->
+                        <div style="text-align:center; padding:3rem; opacity:0.5;">
+                            <i class="fas fa-inbox fa-2x"></i>
+                            <p style="font-size:0.85rem; margin-top:10px;">No materials posted yet.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add New Content Form -->
+                <div style="padding:2rem; background:var(--bg-surface);">
+                    <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:1.5rem;">Add New Material</div>
+                    <form id="contentForm" onsubmit="handleContentSubmit(event)">
+                        <input type="hidden" id="currentContentCourseId">
+                        
+                        <div style="margin-bottom:1.25rem;">
+                            <label class="adm-detail-label" style="display:block; margin-bottom:6px;">Material Type</label>
+                            <select id="contentType" style="width:100%; padding:0.8rem; border-radius:10px; background:var(--bg-card); border:1px solid var(--border); color:white; outline:none;">
+                                <option value="link">External Link / Tool</option>
+                                <option value="lecture">Recorded Lecture (Video)</option>
+                                <option value="zoom">Zoom / Live Meet Link</option>
+                                <option value="pdf">Notes / PDF Document</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-bottom:1.25rem;">
+                            <label class="adm-detail-label" style="display:block; margin-bottom:6px;">Title</label>
+                            <input type="text" id="contentTitle" required placeholder="e.g. Week 1: AI Prompt Engineering"
+                                style="width:100%; padding:0.8rem; border-radius:10px; background:var(--bg-card); border:1px solid var(--border); color:white; outline:none;">
+                        </div>
+
+                        <div style="margin-bottom:1.25rem;">
+                            <label class="adm-detail-label" style="display:block; margin-bottom:6px;">URL / Destination</label>
+                            <input type="url" id="contentUrl" required placeholder="https://..."
+                                style="width:100%; padding:0.8rem; border-radius:10px; background:var(--bg-card); border:1px solid var(--border); color:white; outline:none;">
+                        </div>
+
+                        <div style="margin-bottom:2rem;">
+                            <label class="adm-detail-label" style="display:block; margin-bottom:6px;">Short Description</label>
+                            <textarea id="contentDesc" rows="3" placeholder="Optional notes for students..."
+                                style="width:100%; padding:0.8rem; border-radius:10px; background:var(--bg-card); border:1px solid var(--border); color:white; outline:none; resize:none;"></textarea>
+                        </div>
+
+                        <button type="submit" class="adm-btn adm-btn-primary" style="width:100%; justify-content:center; padding:1rem;">
+                            <i class="fas fa-paper-plane"></i> Post to Classroom
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1143,6 +1249,9 @@
                             <button class="adm-btn adm-btn-sm adm-btn-ghost" onclick="editCourse('${c.id}')" title="Edit">
                                 <i class="fas fa-edit"></i> Edit
                             </button>
+                            <button class="adm-btn adm-btn-sm adm-btn-primary" onclick="openContentModal('${c.id}')" title="Manage Classroom Content">
+                                <i class="fas fa-folder-open"></i> Manage Content
+                            </button>
                             <button class="adm-btn adm-btn-sm adm-btn-reject" onclick="deleteCourse('${c.id}')" title="Delete">
                                 <i class="fas fa-trash"></i>
                             </button>
@@ -1178,6 +1287,109 @@
 
     function closeCourseModal() {
         document.getElementById('courseModal').classList.remove('active');
+    }
+
+    // ── Batch Content Logic ──
+    let currentBatchContent = [];
+
+    async function openContentModal(courseId) {
+        const c = allCourses.find(x => x.id === courseId);
+        if (!c) return;
+
+        document.getElementById('contentModalCourseTitle').textContent = `Manage: ${c.title}`;
+        document.getElementById('currentContentCourseId').value = courseId;
+        document.getElementById('contentForm').reset();
+        
+        await loadBatchContent(courseId);
+        document.getElementById('batchContentModal').classList.add('active');
+    }
+
+    function closeContentModal() {
+        document.getElementById('batchContentModal').classList.remove('active');
+    }
+
+    async function loadBatchContent(courseId) {
+        const list = document.getElementById('contentList');
+        list.innerHTML = '<div style="text-align:center; padding:2rem; opacity:0.5;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+
+        try {
+            const snap = await db.collection('courses').doc(courseId).collection('content').orderBy('createdAt', 'desc').get();
+            currentBatchContent = [];
+            snap.forEach(doc => currentBatchContent.push({ id: doc.id, ...doc.data() }));
+            renderContentList(courseId);
+        } catch(err) {
+            list.innerHTML = `<div style="color:#f87171; text-align:center; padding:1rem;">Error: ${err.message}</div>`;
+        }
+    }
+
+    function renderContentList(courseId) {
+        const list = document.getElementById('contentList');
+        if (!currentBatchContent.length) {
+            list.innerHTML = `
+                <div style="text-align:center; padding:3rem; opacity:0.5;">
+                    <i class="fas fa-inbox fa-2x"></i>
+                    <p style="font-size:0.85rem; margin-top:10px;">No materials posted yet.</p>
+                </div>`;
+            return;
+        }
+
+        const icons = { link: 'fa-link', lecture: 'fa-video', zoom: 'fa-broadcast-tower', pdf: 'fa-file-pdf' };
+
+        list.innerHTML = currentBatchContent.map(i => `
+            <div class="adm-content-item">
+                <div class="adm-content-icon">
+                    <i class="fas ${icons[i.type] || 'fa-file'}"></i>
+                </div>
+                <div class="adm-content-info">
+                    <div class="adm-content-title">${sanitize(i.title)}</div>
+                    <div class="adm-content-meta">${sanitize(i.url)}</div>
+                </div>
+                <button class="adm-content-delete" onclick="deleteContent('${courseId}', '${i.id}')" title="Remove Material">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+        `).join('');
+    }
+
+    async function handleContentSubmit(e) {
+        e.preventDefault();
+        const courseId = document.getElementById('currentContentCourseId').value;
+        const btn = e.target.querySelector('button');
+        
+        const data = {
+            type:        document.getElementById('contentType').value,
+            title:       document.getElementById('contentTitle').value.trim(),
+            url:         document.getElementById('contentUrl').value.trim(),
+            description: document.getElementById('contentDesc').value.trim(),
+            createdAt:   firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        btn.disabled = true;
+        const oldText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Posting...';
+
+        try {
+            await db.collection('courses').doc(courseId).collection('content').add(data);
+            showToast('✅ Material posted to classroom!', 'success');
+            document.getElementById('contentForm').reset();
+            loadBatchContent(courseId);
+        } catch(err) {
+            showToast('Error: ' + err.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = oldText;
+        }
+    }
+
+    async function deleteContent(courseId, contentId) {
+        if (!confirm('Are you sure you want to remove this material?')) return;
+        try {
+            await db.collection('courses').doc(courseId).collection('content').doc(contentId).delete();
+            showToast('❌ Material removed.', 'success');
+            loadBatchContent(courseId);
+        } catch(err) {
+            showToast('Error: ' + err.message, 'error');
+        }
     }
 
     async function handleCourseSubmit(e) {

@@ -374,27 +374,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         const c = courseDoc.exists ? courseDoc.data() : { title: enrollData.courseName || enrollData.course, imageUrl: 'assets/course-placeholder.png' };
                         
                         html += `
-                            <div class="course-card">
-                                <div class="course-image">
-                                    <img src="${c.imageUrl || 'assets/course-placeholder.png'}" alt="${c.title}">
-                                    <div class="course-tag active">Enrolled</div>
+                            <div class="course-card glass-card" style="padding:0; overflow:hidden; border:1px solid rgba(255,255,255,0.05);">
+                                <div class="course-image" style="height:160px; position:relative;">
+                                    <img src="${c.imageUrl || 'assets/course-placeholder.png'}" alt="${c.title}" style="width:100%; height:100%; object-fit:cover;">
+                                    <div class="course-tag active" style="position:absolute; top:12px; right:12px; background:var(--amber); color:black; font-weight:700; font-size:0.7rem; padding:4px 10px; border-radius:100px;">ACTIVE BATCH</div>
                                 </div>
-                                <div class="course-content">
-                                    <h3 class="course-title">${c.title}</h3>
-                                    <div class="course-meta">
-                                        <span><i class="fas fa-calendar-alt"></i> Batch 2026</span>
-                                        <span><i class="fas fa-clock"></i> ${c.timing || '8 PM - 10 PM'}</span>
+                                <div class="course-content" style="padding:1.5rem;">
+                                    <h3 class="course-title" style="font-size:1.1rem; color:white; margin-bottom:1rem;">${c.title}</h3>
+                                    <div class="course-meta" style="display:flex; flex-direction:column; gap:8px; margin-bottom:1.5rem;">
+                                        <span style="font-size:0.82rem; color:rgba(255,255,255,0.6); display:flex; align-items:center; gap:8px;">
+                                            <i class="fas fa-calendar-check" style="color:var(--amber);"></i> ${c.startTime || 'Ongoing'}
+                                        </span>
+                                        <span style="font-size:0.82rem; color:rgba(255,255,255,0.6); display:flex; align-items:center; gap:8px;">
+                                            <i class="fas fa-clock" style="color:var(--amber);"></i> ${c.timing || '8 PM - 10 PM'}
+                                        </span>
                                     </div>
-                                    <div class="course-progress-container">
-                                        <div class="course-progress-text">
-                                            <span>Progress</span>
-                                            <span>0%</span>
-                                        </div>
-                                        <div class="progress-bar">
-                                            <div class="progress-fill" style="width: 0%"></div>
-                                        </div>
-                                    </div>
-                                    <a href="#" class="btn btn-primary btn-block" style="margin-top:1.5rem;">Continue Learning</a>
+                                    <button onclick="openClassroom('${enrollData.courseId || enrollData.course}')" class="btn btn-primary btn-block" style="border-radius:10px; font-weight:700; letter-spacing:0.05em;">
+                                        <i class="fas fa-door-open"></i> ACCESS CLASSROOM
+                                    </button>
                                 </div>
                             </div>
                         `;
@@ -486,6 +483,69 @@ document.addEventListener('DOMContentLoaded', () => {
     function setText(id, val) {
         const el = document.getElementById(id);
         if (el) el.textContent = val;
+    }
+
+    // ============================================================
+    //  CLASSROOM LOGIC (dashboard.html)
+    // ============================================================
+    window.openClassroom = async function(courseId) {
+        const modal = document.getElementById('classroomModal');
+        const list = document.getElementById('classroomContentList');
+        const titleEl = document.getElementById('classroomTitle');
+        
+        if (modal) modal.classList.add('active');
+        if (list) list.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:3rem;"><i class="fas fa-spinner fa-spin fa-2x"></i><p style="margin-top:1rem;">Entering Classroom...</p></div>';
+
+        try {
+            // Fetch course title for header
+            const cDoc = await db.collection('courses').doc(courseId).get();
+            if (cDoc.exists && titleEl) titleEl.textContent = cDoc.data().title;
+
+            // Fetch materials
+            const snap = await db.collection('courses').doc(courseId).collection('content').orderBy('createdAt', 'desc').get();
+            
+            if (snap.empty) {
+                list.innerHTML = `
+                    <div style="grid-column:1/-1; text-align:center; padding:4rem; opacity:0.3;">
+                        <i class="fas fa-layer-group fa-3x" style="margin-bottom:1rem;"></i>
+                        <p>Your instructor hasn't posted any materials yet.</p>
+                    </div>`;
+            } else {
+                let html = '';
+                const icons = { link: 'fa-link', lecture: 'fa-video', zoom: 'fa-broadcast-tower', pdf: 'fa-file-pdf' };
+                const labels = { link: 'Link', lecture: 'Lecture', zoom: 'Live Class', pdf: 'Document' };
+
+                snap.forEach(doc => {
+                    const item = doc.data();
+                    html += `
+                        <a href="${item.url}" target="_blank" class="classroom-card glass-card" style="padding:1.5rem; text-decoration:none; display:flex; flex-direction:column; gap:12px; transition: 0.2s; border:1px solid rgba(255,255,255,0.05);">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                <div style="background:var(--amber-dim); color:var(--amber); width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.2rem;">
+                                    <i class="fas ${icons[item.type] || 'fa-file'}"></i>
+                                </div>
+                                <span style="font-size:0.65rem; font-weight:700; color:rgba(255,255,255,0.4); text-transform:uppercase;">${labels[item.type] || 'Material'}</span>
+                            </div>
+                            <div>
+                                <div style="font-size:1rem; font-weight:700; color:white; margin-bottom:4px; line-height:1.4;">${item.title}</div>
+                                <div style="font-size:0.75rem; color:rgba(255,255,255,0.5); line-height:1.5;">${item.description || 'Click to access material'}</div>
+                            </div>
+                            <div style="margin-top:auto; padding-top:1rem; color:var(--amber); font-size:0.75rem; font-weight:700; display:flex; align-items:center; gap:6px;">
+                                GO TO CONTENT <i class="fas fa-arrow-right"></i>
+                            </div>
+                        </a>
+                    `;
+                });
+                list.innerHTML = html;
+            }
+        } catch(err) {
+            console.error(err);
+            if (list) list.innerHTML = '<p style="color:#f87171; text-align:center;">Error loading materials.</p>';
+        }
+    }
+
+    window.closeClassroom = function() {
+        const modal = document.getElementById('classroomModal');
+        if (modal) modal.classList.remove('active');
     }
 
 });
