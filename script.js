@@ -548,4 +548,63 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modal) modal.classList.remove('active');
     }
 
+    // ============================================================
+    //  DIGITAL ID CARD LOGIC (dashboard.html)
+    // ============================================================
+    window.openIDCard = async function() {
+        const modal = document.getElementById('idCardModal');
+        const cardName = document.getElementById('cardName');
+        const cardRoll = document.getElementById('cardRoll');
+        
+        // Populate with current user data
+        const currentUser = auth.currentUser;
+        if (!currentUser) return;
+
+        try {
+            const doc = await db.collection('students').doc(currentUser.uid).get();
+            if (doc.exists) {
+                const data = doc.data();
+                if (cardName) cardName.textContent = data.fullName;
+                if (cardRoll) cardRoll.textContent = data.rollNumber || 'ZCP-2026-PENDING';
+            }
+            if (modal) modal.classList.add('active');
+        } catch (err) {
+            console.error('Error opening ID card:', err);
+        }
+    }
+
+    window.closeIDCard = function() {
+        const modal = document.getElementById('idCardModal');
+        if (modal) modal.classList.remove('active');
+    }
+
+    window.downloadIDCard = function() {
+        const card = document.getElementById('zcpIDCard');
+        if (!card) return;
+
+        const btn = event.currentTarget;
+        const originalContent = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERATING...';
+
+        html2canvas(card, {
+            scale: 3, // High quality
+            backgroundColor: null,
+            logging: false,
+            useCORS: true
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `ZCP_ID_${document.getElementById('cardName').textContent.replace(/\s+/g, '_')}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+        }).catch(err => {
+            console.error('Download error:', err);
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+        });
+    }
+
 });

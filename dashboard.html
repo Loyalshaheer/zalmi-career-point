@@ -12,6 +12,7 @@
         href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Noto+Sans+Urdu:wght@400;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 
 <body class="dashboard-page">
@@ -67,9 +68,13 @@
                 <h2>Welcome, <span id="userName" class="text-gradient">Student</span>!</h2>
                 <p id="userRoll" style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;"></p>
             </div>
-            <div class="header-right">
-                <div class="user-meta">
-                    <strong id="displayFullName"></strong>
+            <div class="header-right" style="gap: 1.5rem;">
+                <button onclick="openIDCard()" class="btn btn-ghost" style="padding: 0.6rem 1.2rem; border-radius: 50px; font-size: 0.8rem; font-weight: 700; border: 1px solid rgba(255,255,255,0.1); color: var(--amber);">
+                    <i class="fas fa-id-card"></i> DIGITAL ID CARD
+                </button>
+                <div class="user-meta" style="text-align: right;">
+                    <strong id="displayFullName" style="display: block; font-size: 1rem;"></strong>
+                    <span style="font-size: 0.72rem; color: var(--amber); font-weight: 700; letter-spacing: 0.05em;">VERIFIED STUDENT</span>
                 </div>
                 <div class="user-avatar-circle">
                     <i class="fas fa-user-graduate"></i>
@@ -122,6 +127,71 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ID Card Modal -->
+    <div class="adm-modal-overlay" id="idCardModal">
+        <div class="adm-modal" style="max-width: 480px; background: transparent; padding: 0; box-shadow: none;">
+            
+            <!-- ID Card Itself (The part to capture) -->
+            <div id="zcpIDCard" class="id-card-wrap">
+                <div class="id-card-inner">
+                    <!-- Top Branding -->
+                    <div class="id-header">
+                        <div class="id-logo">
+                            <img src="assets/logo.png" alt="ZCP Logo">
+                            <div class="id-brand">
+                                <span class="id-main">ZALMI</span>
+                                <span class="id-sub">CAREER POINT</span>
+                            </div>
+                        </div>
+                        <div class="id-year">2026</div>
+                    </div>
+
+                    <!-- Student Body -->
+                    <div class="id-body">
+                        <div class="id-avatar">
+                            <div class="id-avatar-circle">
+                                <i class="fas fa-user-graduate"></i>
+                            </div>
+                            <div class="id-verified-badge"><i class="fas fa-check"></i></div>
+                        </div>
+
+                        <div class="id-info">
+                            <div class="id-label">STUDENT NAME</div>
+                            <div class="id-name" id="cardName">Jawan Force</div>
+                            
+                            <div class="id-row">
+                                <div class="id-col">
+                                    <div class="id-label">ROLL NUMBER</div>
+                                    <div class="id-val" id="cardRoll">ZCP-2026-0001</div>
+                                </div>
+                                <div class="id-col">
+                                    <div class="id-label">ISSUED ON</div>
+                                    <div class="id-val">March 2026</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer Branding -->
+                    <div class="id-footer">
+                        <div class="id-motto">SKILLS • EMPOWERMENT • GROWTH</div>
+                        <div class="id-watermark">OFFICIAL STUDENT ID • zalmi career point</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div style="display: flex; gap: 1rem; margin-top: 2rem; justify-content: center;">
+                <button onclick="downloadIDCard()" class="btn btn-primary" style="padding: 0.8rem 2rem; border-radius: 50px;">
+                    <i class="fas fa-download"></i> SAVE AS IMAGE
+                </button>
+                <button onclick="closeIDCard()" class="btn btn-ghost" style="padding: 0.8rem 1.5rem; border-radius: 50px;">
+                    CLOSE
+                </button>
             </div>
         </div>
     </div>

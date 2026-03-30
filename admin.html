@@ -864,6 +864,73 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
+    <!-- ID Card Preview Modal -->
+    <div class="adm-modal-overlay" id="idCardModal">
+        <div class="adm-modal" style="max-width: 480px; background: transparent; padding: 0; box-shadow: none;">
+            
+            <!-- ID Card Itself (The part to capture) -->
+            <div id="zcpIDCard" class="id-card-wrap">
+                <div class="id-card-inner">
+                    <!-- Top Branding -->
+                    <div class="id-header">
+                        <div class="id-logo">
+                            <img src="assets/logo.png" alt="ZCP Logo">
+                            <div class="id-brand" style="display:flex; flex-direction:column;">
+                                <span class="id-main" style="font-size:0.95rem; font-weight:800; letter-spacing:0.05em; color:white; line-height:1;">ZALMI</span>
+                                <span class="id-sub" style="font-size:0.55rem; font-weight:700; color:var(--amber); letter-spacing:0.2em; margin-top:2px;">CAREER POINT</span>
+                            </div>
+                        </div>
+                        <div class="id-year" style="font-size:0.7rem; font-weight:800; color:var(--amber); border:1px solid var(--amber); padding:2px 8px; border-radius:4px;">2026</div>
+                    </div>
+
+                    <!-- Student Body -->
+                    <div class="id-body" style="padding: 30px 20px; text-align:center; display:flex; flex-direction:column; align-items:center;">
+                        <div class="id-avatar" style="position:relative; margin-bottom:24px;">
+                            <div class="id-avatar-circle" style="width:120px; height:120px; background:linear-gradient(45deg, #1a1a1a, #2a2a2a); border:3px solid var(--amber); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:3rem; color:var(--amber);">
+                                <i class="fas fa-user-graduate"></i>
+                            </div>
+                            <div class="id-verified-badge" style="position:absolute; bottom:5px; right:5px; width:30px; height:30px; background:var(--amber); color:black; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.8rem; border:3px solid #0a0a0a;">
+                                <i class="fas fa-check"></i>
+                            </div>
+                        </div>
+
+                        <div class="id-info">
+                            <div class="id-label" style="font-size:0.55rem; font-weight:700; color:rgba(255,255,255,0.4); letter-spacing:0.15em; margin-bottom:6px; text-transform:uppercase;">STUDENT NAME</div>
+                            <div class="id-name" id="cardName" style="font-size:1.4rem; font-weight:700; color:white; margin-bottom:24px; letter-spacing:-0.02em;">Jawan Force</div>
+                            
+                            <div class="id-row" style="display:grid; grid-template-columns:1fr 1fr; width:100%; gap:20px; padding-top:15px; border-top:1px dashed rgba(255,255,255,0.1);">
+                                <div class="id-col">
+                                    <div class="id-label">ROLL NUMBER</div>
+                                    <div class="id-val" id="cardRoll" style="font-size:0.85rem; font-weight:700; color:var(--amber);">ZCP-2026-PENDING</div>
+                                </div>
+                                <div class="id-col">
+                                    <div class="id-label" style="font-size:0.55rem; font-weight:700; color:rgba(255,255,255,0.4); letter-spacing:0.15em; margin-bottom:6px; text-transform:uppercase;">ISSUED ON</div>
+                                    <div class="id-val" style="font-size:0.85rem; font-weight:700; color:var(--amber);">March 2026</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer Branding -->
+                    <div class="id-footer" style="padding:20px; background:rgba(212, 175, 55, 0.05); text-align:center;">
+                        <div class="id-motto" style="font-size:0.55rem; font-weight:800; letter-spacing:0.25em; color:rgba(255,255,255,0.8); margin-bottom:8px;">SKILLS • EMPOWERMENT • GROWTH</div>
+                        <div class="id-watermark" style="font-size:0.45rem; font-weight:600; color:rgba(255,255,255,0.2); text-transform:uppercase; letter-spacing:0.1em;">OFFICIAL STUDENT ID • zalmi career point</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div style="display: flex; gap: 1rem; margin-top: 2rem; justify-content: center;">
+                <button onclick="downloadIDCard()" class="adm-btn adm-btn-primary" style="padding: 0.8rem 2rem; border-radius: 50px;">
+                    <i class="fas fa-download"></i> DOWNLOAD CARD
+                </button>
+                <button onclick="closeIDCard()" class="adm-btn adm-btn-ghost" style="padding: 0.8rem 1.5rem; border-radius: 50px; color:white;">
+                    CLOSE
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
     // ── Firebase Init ──
     const firebaseConfig = {
@@ -1091,10 +1158,22 @@
     // ── Update Status ──
     async function updateStatus(docId, newStatus) {
         try {
-            await db.collection('enrollments').doc(docId).update({
+            const data = {
                 status: newStatus,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            };
+
+            // AUTO-GENERATE ROLL NUMBER ON APPROVAL
+            if (newStatus === 'active') {
+                const doc = await db.collection('enrollments').doc(docId).get();
+                if (doc.exists && !doc.data().rollNumber) {
+                    // Simple roll number: ZCP-2026- (last 4 digits of ID or random)
+                    const rand = Math.floor(1000 + Math.random() * 9000);
+                    data.rollNumber = `ZCP-2026-${rand}`;
+                }
+            }
+
+            await db.collection('enrollments').doc(docId).update(data);
             showToast(`Status updated to "${newStatus}"`, 'success');
             await loadData();
             closeModal();
@@ -1138,13 +1217,57 @@
 
         const actions = document.getElementById('modalActions');
         if (actions) {
-            actions.innerHTML = r.isPending
-                ? `<button class="adm-btn adm-btn-primary" onclick="updateStatus('${r.id}','active')"><i class="fas fa-check"></i> Approve Enrollment</button>
+            let html = r.isPending
+                ? `<button class="adm-btn adm-btn-primary" onclick="updateStatus('${r.id}','active')"><i class="fas fa-check"></i> Approve & Issue ID</button>
                    <button class="adm-btn adm-btn-reject" onclick="updateStatus('${r.id}','rejected')"><i class="fas fa-times"></i> Reject</button>`
                 : `<button class="adm-btn adm-btn-ghost" onclick="updateStatus('${r.id}','pending_verification')"><i class="fas fa-undo"></i> Set to Pending</button>`;
+            
+            // Add ID CARD button for active students
+            if (!r.isPending) {
+                html += `<button class="adm-btn adm-btn-primary" style="background:#d4af37; color:black;" onclick="openIDCardFromAdmin('${r.id}')">
+                            <i class="fas fa-id-card"></i> View ID Card
+                         </button>`;
+            }
+            actions.innerHTML = html;
         }
 
         document.getElementById('detailModal').classList.add('active');
+    }
+
+    // ── Admin ID Card Logic ──
+    window.openIDCardFromAdmin = function(enrollmentId) {
+        const r = allRows.find(x => x.id === enrollmentId);
+        if (!r) return;
+
+        const modal = document.getElementById('idCardModal');
+        const cardName = document.getElementById('cardName');
+        const cardRoll = document.getElementById('cardRoll');
+        
+        if (cardName) cardName.textContent = r.fullName;
+        if (cardRoll) cardRoll.textContent = r.rollNumber || 'ZCP-2026-PENDING';
+
+        if (modal) modal.classList.add('active');
+    }
+
+    window.closeIDCard = function() {
+        const modal = document.getElementById('idCardModal');
+        if (modal) modal.classList.remove('active');
+    }
+
+    window.downloadIDCard = function() {
+        const card = document.getElementById('zcpIDCard');
+        if (!card) return;
+
+        html2canvas(card, {
+            scale: 3, 
+            backgroundColor: null,
+            useCORS: true
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `ZCP_ID_${document.getElementById('cardName').textContent.replace(/\s+/g, '_')}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
     }
 
     function closeModal() {
