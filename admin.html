@@ -123,8 +123,38 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            transition: all 0.4s ease;
+            transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
+        /* Collapsed Sidebar State */
+        .adm-sidebar.collapsed { width: 80px; padding: 1.5rem 0.75rem; }
+        .adm-sidebar.collapsed .adm-logo-text,
+        .adm-sidebar.collapsed .adm-logo-sub,
+        .adm-sidebar.collapsed .adm-nav-section,
+        .adm-sidebar.collapsed .adm-nav-item span,
+        .adm-sidebar.collapsed .adm-user-info div,
+        .adm-sidebar.collapsed .adm-logout span { display: none; }
+        
+        .adm-sidebar.collapsed .adm-logo { justify-content: center; margin-bottom: 2rem; padding-bottom: 1.5rem; }
+        .adm-sidebar.collapsed .adm-nav-item { justify-content: center; padding: 0.75rem; }
+        .adm-sidebar.collapsed .adm-nav-item i { font-size: 1.1rem; width: auto; }
+        .adm-sidebar.collapsed .adm-logout { justify-content: center; border: none; padding: 0.75rem; }
+        
+        .adm-main.expanded { margin-left: 80px; }
+
+        /* Sidebar Toggle Btn */
+        .sidebar-toggle-trigger {
+            position: absolute; top: 1.25rem; right: -12px;
+            width: 24px; height: 24px;
+            background: var(--amber);
+            border: 2px solid var(--bg-surface);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: #000; font-size: 0.7rem; cursor: pointer;
+            z-index: 150;
+            transition: transform 0.3s;
+        }
+        .adm-sidebar.collapsed .sidebar-toggle-trigger { transform: rotate(180deg); right: -12px; }
 
         /* Mobile Header */
         .adm-mobile-header {
@@ -190,7 +220,8 @@
         .adm-topbar-actions { display: flex; gap: 0.75rem; align-items: center; }
 
         /* Page content */
-        .adm-content { padding: 2.5rem; }
+        .adm-content { padding: 1.5rem 2.5rem; transition: padding 0.3s; }
+        .adm-main.expanded .adm-content { padding-left: 3rem; padding-right: 3rem; }
 
         /* STAT CARDS */
         .adm-stats {
@@ -348,8 +379,22 @@
         tbody tr:last-child { border-bottom: none; }
         tbody tr:hover { background: rgba(255,255,255,0.02); }
         td { padding: 1rem 1.25rem; font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; }
-        td.td-name { color: var(--text-primary); font-weight: 600; }
-        td.td-email { color: var(--text-muted); font-size: 0.8rem; }
+        td.td-name { color: var(--text-primary); font-weight: 600; white-space: normal; min-width: 140px; }
+        td.td-email { color: var(--text-muted); font-size: 0.8rem; white-space: normal; word-break: break-all; min-width: 150px; }
+        
+        /* Course column specific */
+        td:nth-child(5) { white-space: normal !important; min-width: 140px; line-height: 1.4; }
+
+        /* Sticky Action Column */
+        th:last-child, td:last-child {
+            position: sticky; right: 0;
+            background: var(--bg-card);
+            z-index: 10;
+            border-left: 1px solid var(--border);
+            box-shadow: -4px 0 8px rgba(0,0,0,0.2);
+        }
+        tr:hover td:last-child { background: #131b2c; } /* Highlight for hover */
+        thead th:last-child { background: var(--bg-surface); z-index: 11; }
 
         /* Status badges */
         .s-badge {
@@ -553,6 +598,10 @@
                 <div class="adm-logo-sub">Admin Console</div>
             </div>
         </a>
+
+        <button class="sidebar-toggle-trigger" onclick="toggleSidebar()" title="Toggle Sidebar">
+            <i class="fas fa-chevron-left"></i>
+        </button>
 
         <nav class="adm-nav">
             <div class="adm-nav-section">Management</div>
@@ -1807,10 +1856,25 @@
     }
     </script>
     <script>
+        // --- DESKTOP SIDEBAR COLLAPSE ---
+        window.toggleSidebar = function() {
+            const bodySB = document.getElementById('admSidebar');
+            const bodyMain = document.querySelector('.adm-main');
+            bodySB.classList.toggle('collapsed');
+            bodyMain.classList.toggle('expanded');
+            localStorage.setItem('adm_sb_collapsed', bodySB.classList.contains('collapsed'));
+        };
+
         // --- MOBILE SIDEBAR TOGGLE ---
         const sidebar = document.getElementById('admSidebar');
         const toggleBtn = document.getElementById('admSidebarToggle');
         const mask = document.getElementById('admSidebarMask');
+
+        // Load sidebar state on init (Desktop)
+        if (localStorage.getItem('adm_sb_collapsed') === 'true' && window.innerWidth > 1024) {
+            sidebar.classList.add('collapsed');
+            document.querySelector('.adm-main').classList.add('expanded');
+        }
 
         if(toggleBtn && sidebar && mask) {
             toggleBtn.addEventListener('click', () => {
