@@ -394,7 +394,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 if (isLogin) {
                     await auth.signInWithEmailAndPassword(email, password);
-                    window.location.href = 'dashboard.html';
+                    // Centralized redirection is handled by onAuthStateChanged
                 } else {
                     const fullName = document.getElementById('regFullName')?.value?.trim();
                     const phone    = document.getElementById('regPhone')?.value?.trim();
@@ -444,7 +444,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Automatic Redirect from Login page IF user is already authenticated
         if (document.body.classList.contains('auth-page')) {
-            window.location.href = 'dashboard.html';
+            window.location.replace('dashboard.html');
             return;
         }
 
