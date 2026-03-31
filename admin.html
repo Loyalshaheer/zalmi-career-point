@@ -34,6 +34,7 @@
             top: 0; left: 0; bottom: 0;
             z-index: 100;
             padding: 2rem 1.5rem;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .adm-logo {
             display: flex;
@@ -122,6 +123,54 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            transition: all 0.4s ease;
+        }
+
+        /* Mobile Header */
+        .adm-mobile-header {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 70px;
+            background: rgba(8, 13, 26, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            padding: 0 1.5rem;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .adm-sidebar-mask {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 1100;
+        }
+        .adm-sidebar-mask.active { display: block; }
+
+        @media screen and (max-width: 1024px) {
+            .adm-sidebar {
+                transform: translateX(-100%);
+                z-index: 1200;
+            }
+            .adm-sidebar.active {
+                transform: translateX(0);
+            }
+            .adm-main {
+                margin-left: 0;
+                padding-top: 70px;
+            }
+            .adm-mobile-header {
+                display: flex;
+            }
+            .adm-topbar {
+                display: none; /* Mobile header takes over */
+            }
         }
 
         /* Top Bar */
@@ -484,7 +533,19 @@
 <body>
 
     <!-- SIDEBAR -->
-    <aside class="adm-sidebar">
+    <div class="adm-sidebar-mask" id="admSidebarMask"></div>
+
+    <header class="adm-mobile-header">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <img src="assets/logo.png" alt="ZCP" style="height:32px;">
+            <span style="font-weight:700; font-size:0.9rem;">ZALMI <span>CP</span></span>
+        </div>
+        <button id="admSidebarToggle" style="background:none; border:none; color:white; font-size:1.4rem; cursor:pointer;">
+            <i class="fas fa-bars"></i>
+        </button>
+    </header>
+
+    <aside class="adm-sidebar" id="admSidebar">
         <a href="index.html" class="adm-logo">
             <img src="assets/logo.png" alt="ZCP">
             <div>
@@ -1723,6 +1784,34 @@
     function sanitize(str) {
         return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
+    </script>
+    <script>
+        // --- MOBILE SIDEBAR TOGGLE ---
+        const sidebar = document.getElementById('admSidebar');
+        const toggleBtn = document.getElementById('admSidebarToggle');
+        const mask = document.getElementById('admSidebarMask');
+
+        if(toggleBtn && sidebar && mask) {
+            toggleBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+                mask.classList.toggle('active');
+            });
+
+            mask.addEventListener('click', () => {
+                sidebar.classList.remove('active');
+                mask.classList.remove('active');
+            });
+
+            // Close on link click on mobile
+            sidebar.querySelectorAll('.adm-nav-item').forEach(link => {
+                link.addEventListener('click', () => {
+                    if(window.innerWidth <= 1024) {
+                        sidebar.classList.remove('active');
+                        mask.classList.remove('active');
+                    }
+                });
+            });
+        }
     </script>
 </body>
 </html>

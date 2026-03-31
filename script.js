@@ -693,4 +693,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         draw();
     }
+
+    // ============================================================
+    //  DASHBOARD SIDEBAR TOGGLE
+    // ============================================================
+    const sideToggle = document.getElementById('sidebarToggle');
+    const mainSidebar = document.getElementById('mainSidebar');
+    const sideMask    = document.getElementById('sidebarMask');
+
+    if (sideToggle && mainSidebar && sideMask) {
+        sideToggle.addEventListener('click', () => {
+            mainSidebar.classList.toggle('active');
+            sideMask.classList.toggle('active');
+        });
+
+        sideMask.addEventListener('click', () => {
+            mainSidebar.classList.remove('active');
+            sideMask.classList.remove('active');
+        });
+
+        // Close on nav click (mobile)
+        mainSidebar.querySelectorAll('.nav-item a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 1024) {
+                    mainSidebar.classList.remove('active');
+                    sideMask.classList.remove('active');
+                }
+            });
+        });
+    }
 });
+

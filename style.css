@@ -2578,3 +2578,86 @@ nav {
     from { opacity: 0; transform: scale(0.9); }
     to { opacity: 1; transform: scale(1); }
 }
+
+/* ==========================================================================
+   CORE RESPONSIVE FRAMEWORK — Full Site Optimization
+   ========================================================================== */
+
+/* Utility: Mobile/Desktop only */
+.mobile-only { display: none !important; }
+.desktop-only { display: block !important; }
+
+/* ── Mobile & Tablet Adjustments (up to 1024px) ── */
+@media screen and (max-width: 1024px) {
+    :root {
+        --section-spacing: 60px;
+    }
+
+    .desktop-only { display: none !important; }
+    .mobile-only { display: block !important; }
+
+    .container {
+        padding: 0 1.25rem;
+    }
+
+    /* Grids */
+    .grids-2 {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+    }
+
+    /* Table horizontal scroll wrapper */
+    .adm-table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 1rem;
+        background: rgba(0,0,0,0.2);
+        border-radius: var(--radius-md);
+        padding: 4px;
+    }
+    .adm-table-wrap table {
+        min-width: 900px;
+        border-collapse: collapse;
+    }
+
+    /* Custom Scrollbar for tables */
+    .adm-table-wrap::-webkit-scrollbar {
+        height: 6px;
+    }
+    .adm-table-wrap::-webkit-scrollbar-thumb {
+        background: var(--border-amber);
+        border-radius: 10px;
+    }
+}
+
+/* ── Mobile Specific (< 768px) ── */
+@media screen and (max-width: 767px) {
+    body {
+        font-size: 15px;
+    }
+
+    h1 { font-size: 2.8rem; }
+    h2 { font-size: 2.2rem; }
+    h3 { font-size: 1.6rem; }
+
+    /* Modal fitting */
+    .adm-modal {
+        width: 96% !important;
+        padding: 1.5rem !important;
+        margin: 10px auto;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    /* Hero Padding */
+    .hero {
+        padding: 120px 0 60px 0 !important;
+    }
+}
+
+/* ── Ultra Wide Support ── */
+@media screen and (min-width: 1600px) {
+    :root {
+        --container-max: 1440px;
+    }
+}

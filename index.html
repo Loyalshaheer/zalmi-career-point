@@ -624,22 +624,55 @@
             z-index: 10;
         }
 
-        /* RESPONSIVE */
+        /* RESPONSIVE — Full Site Optimization */
         @media (max-width: 1024px) {
-            .pd-bento { display: flex; flex-direction: column; }
+            .pd-bento { 
+                display: grid; 
+                grid-template-columns: 1fr; 
+                gap: 1.5rem; 
+            }
             .pd-card-featured, .pd-card-side, .pd-card-third { grid-column: span 12; }
-            .pd-about-grid { grid-template-columns: 1fr; gap: 3rem; }
-            .pd-steps { grid-template-columns: repeat(2, 1fr); }
-            .pd-how-grid { grid-template-columns: repeat(2, 1fr); }
+            .pd-about-grid { grid-template-columns: 1fr; gap: 3rem; text-align: center; }
+            .pd-about-fist { font-size: 5rem; }
             .pd-footer-grid { grid-template-columns: 1fr; gap: 3rem; }
+            
+            /* Glass Mobile Nav Control */
+            .pd-nav-links {
+                position: fixed;
+                top: 75px; left: 0; right: 0;
+                background: rgba(4, 8, 18, 0.98);
+                backdrop-filter: blur(25px);
+                -webkit-backdrop-filter: blur(25px);
+                flex-direction: column;
+                padding: 2.5rem;
+                gap: 1.5rem;
+                border-bottom: 1px solid var(--border);
+                transform: translateY(-20px);
+                opacity: 0;
+                pointer-events: none;
+                transition: all 0.4s var(--ease-out);
+                z-index: 9000;
+            }
+            .pd-nav-links.active {
+                transform: translateY(0);
+                opacity: 1;
+                pointer-events: all;
+            }
+            .mobile-menu-btn { display: flex; align-items: center; justify-content: center; }
         }
-        @media (max-width: 640px) {
-            .pd-steps { grid-template-columns: 1fr; }
-            .pd-how-grid { grid-template-columns: 1fr; }
+
+        @media (max-width: 768px) {
+            .pd-hero { padding: 140px 0 80px; }
+            .pd-hero-title { font-size: clamp(2.2rem, 8vw, 3rem); }
+            .pd-hero-stats { gap: 1.5rem; flex-wrap: wrap; justify-content: center; }
+            .pd-stat-item { flex: 1 1 100px; text-align: center; }
+            .pd-stat-val { font-size: 1.7rem; }
+            .pd-about-quote { font-size: 1.25rem; line-height: 1.8; padding: 1.5rem; }
+            .pd-steps { grid-template-columns: 1fr; gap: 1.5rem; }
+            .pd-how-grid { grid-template-columns: 1fr; gap: 1.5rem; }
             .pd-form-grid { grid-template-columns: 1fr; }
-            .pd-hero-stats { gap: 2rem; flex-wrap: wrap; }
-            .pd-nav-links { display: none; }
-            .pd-modal { padding: 2rem; }
+            .pd-modal { padding: 3rem 1.5rem; width: 95%; }
+            .pd-payment-methods { flex-direction: column; gap: 1rem; }
         }
     </style>
 </head>
