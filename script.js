@@ -1208,5 +1208,127 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+
+    // ============================================================
+    //  BULK ACTIONS & EXCEL EXPORT (admin.html)
+    // ============================================================
+    
+    // 1. Professional Excel Export
+    window.exportToXL = () => {
+        if (!enrollmentsData || enrollmentsData.length === 0) {
+            showToast('No data to export', 'error');
+            return;
+        }
+
+        // Filter currently visible data
+        const filtered = enrollmentsData.filter(item => {
+            if (currentAdminFilter === 'all') return true;
+            if (currentAdminFilter === 'pending') return item.status === 'form_submitted' || item.status === 'payment_confirmed';
+            if (currentAdminFilter === 'active') return item.status === 'active';
+            if (currentAdminFilter === 'rejected') return item.status === 'rejected';
+            if (currentAdminFilter === 'content-creation') return (item.courseName || '').toLowerCase().includes('content creation');
+            if (currentAdminFilter === 'web-app') return (item.courseName || '').toLowerCase().includes('web');
+            return true;
+        });
+
+        const data = filtered.map((e, index) => ({
+            '#': index + 1,
+            'Name': e.fullName,
+            'Email': e.email,
+            'WhatsApp': e.whatsapp || e.phone,
+            'Course': e.courseName || e.course,
+            'City': e.city || 'N/A',
+            'Payment Method': e.paymentMethod || 'N/A',
+            'Status': e.status.toUpperCase(),
+            'Date': e.submittedAt?.toDate().toLocaleDateString() || 'N/A'
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Enrollments");
+        XLSX.writeFile(wb, `ZCP_Students_${new Date().toISOString().split('T')[0]}.xlsx`);
+        showToast('Sheet exported successfully!', 'success');
+    };
+
+    // 2. Bulk Status Update (Approve/Reject)
+    window.handleBulkStatus = async (newStatus) => {
+        const filtered = enrollmentsData.filter(item => {
+            if (currentAdminFilter === 'all') return true;
+            if (currentAdminFilter === 'pending') return item.status === 'form_submitted' || item.status === 'payment_confirmed';
+            if (currentAdminFilter === 'active') return item.status === 'active';
+            if (currentAdminFilter === 'rejected') return item.status === 'rejected';
+            return true;
+        });
+
+        if (filtered.length === 0) {
+            showToast('No records selected for bulk update.', 'error');
+            return;
+        }
+
+        if (!confirm(`Are you sure you want to set status to ${newStatus.toUpperCase()} for all ${filtered.length} visible records?`)) return;
+
+        const btn = document.querySelector(`button[onclick="handleBulkStatus('${newStatus}')"]`);
+        const origText = btn ? btn.innerHTML : 'Processing...';
+        if (btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...'; btn.disabled = true; }
+
+        try {
+            const batch = db.batch();
+            filtered.forEach(doc => {
+                const docRef = db.collection('enrollments').doc(doc.id);
+                const updateObj = { status: newStatus, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+                if (newStatus === 'active') {
+                    updateObj.paymentStatus = 'verified';
+                    if (!doc.rollNumber) {
+                        updateObj.rollNumber = 'ZCP-' + (2026) + '-' + (Math.floor(100+Math.random()*900));
+                    }
+                }
+                batch.update(docRef, updateObj);
+            });
+
+            await batch.commit();
+            showToast(`Successfully updated ${filtered.length} records!`, 'success');
+            loadAdminData(); // Refresh table
+        } catch (err) {
+            console.error(err);
+            showToast('Bulk update failed: ' + err.message, 'error');
+        } finally {
+            if (btn) { btn.innerHTML = origText; btn.disabled = false; }
+        }
+    };
+
+    // 3. Bulk Delete (Double Confirmation)
+    window.handleBulkDelete = async () => {
+        const filtered = enrollmentsData.filter(item => {
+            if (currentAdminFilter === 'all') return true;
+            if (currentAdminFilter === 'pending') return item.status === 'form_submitted' || item.status === 'payment_confirmed';
+            if (currentAdminFilter === 'active') return item.status === 'active';
+            if (currentAdminFilter === 'rejected') return item.status === 'rejected';
+            return true;
+        });
+
+        if (filtered.length === 0) return;
+
+        const pass = prompt(`⚠️ WARNING: You are about to DELETE ${filtered.length} records permanently.\n\nThis cannot be undone. Type "DELETE" to confirm:`);
+        if (pass !== 'DELETE') return;
+
+        const btn = document.querySelector(`button[onclick="handleBulkDelete()"]`);
+        const origText = btn ? btn.innerHTML : 'Deleting...';
+        if (btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...'; btn.disabled = true; }
+
+        try {
+            const batch = db.batch();
+            filtered.forEach(doc => {
+                batch.delete(db.collection('enrollments').doc(doc.id));
+            });
+            await batch.commit();
+            showToast(`Permanently deleted ${filtered.length} records.`, 'success');
+            loadAdminData();
+        } catch (err) {
+            console.error(err);
+            showToast('Delete operation failed', 'error');
+        } finally {
+            if (btn) { btn.innerHTML = origText; btn.disabled = false; }
+        }
+    };
 });
 
