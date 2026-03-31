@@ -427,8 +427,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             } catch (err) {
+                console.error('Auth error:', err);
                 if (authErrorMsg) { authErrorMsg.textContent = err.message; authErrorMsg.style.display = 'block'; }
                 submitBtn.disabled = false;
+                submitBtn.innerHTML = origHtml;
             }
         });
     }
@@ -444,6 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Automatic Redirect from Login page IF user is already authenticated
         if (document.body.classList.contains('auth-page')) {
+            console.log('User already authenticated, redirecting to dashboard...');
             window.location.replace('dashboard.html');
             return;
         }
