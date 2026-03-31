@@ -112,7 +112,23 @@
             display: none;
         }
         .register-only { display: none; }
+        /* Instant mode handling to prevent flickering */
+        body.signup-mode .register-only { display: block; }
+        body.signup-mode .login-only { display: none; }
     </style>
+    <script>
+        // High-priority script to set mode before render
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('mode') === 'signup') {
+                document.documentElement.classList.add('signup-mode');
+                // We'll also add it to body once it exists
+                window.addEventListener('DOMContentLoaded', () => {
+                    document.body.classList.add('signup-mode');
+                });
+            }
+        })();
+    </script>
 </head>
 <body class="auth-page">
 
@@ -144,6 +160,14 @@
 
             <h1 id="authTitle" class="auth-title">Welcome back</h1>
             <p id="authSubtitle" class="auth-subtitle">Sign in to access your student dashboard.</p>
+            <script>
+                (function() {
+                    if (new URLSearchParams(window.location.search).get('mode') === 'signup') {
+                        document.getElementById('authTitle').textContent = 'Create account';
+                        document.getElementById('authSubtitle').textContent = 'Join Zalmi Career Point today.';
+                    }
+                })();
+            </script>
 
             <div id="errorMsg"></div>
 

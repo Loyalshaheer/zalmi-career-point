@@ -353,6 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleAuth.textContent = 'Sign in instead';
             const btnText = loginForm.querySelector('.auth-submit-btn .btn-text');
             if (btnText) btnText.textContent = 'Create Account';
+            document.body.classList.add('signup-mode'); 
         }
 
         toggleAuth.addEventListener('click', e => {
