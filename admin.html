@@ -18,8 +18,8 @@
             color: var(--text-primary);
             font-family: var(--font-body);
             min-height: 100vh;
-            display: flex;
             -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
         }
 
         /* Sidebar */
@@ -119,12 +119,11 @@
         /* Main Content */
         .adm-main {
             margin-left: 260px;
-            flex: 1;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            width: calc(100% - 260px);
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--bg-surface);
         }
 
         /* Collapsed Sidebar State */
@@ -140,7 +139,7 @@
         .adm-sidebar.collapsed .adm-nav-item { justify-content: center; padding: 0.75rem; width: auto; }
         .adm-sidebar.collapsed .adm-nav-item i { font-size: 1.1rem; width: auto; }
         
-        .adm-main.expanded { margin-left: 80px; width: calc(100% - 80px); }
+        .adm-main.expanded { margin-left: 80px; }
 
         /* Sidebar Toggle Btn */
         .sidebar-toggle-trigger {
@@ -393,8 +392,41 @@
         }
         .adm-table-wrap::-webkit-scrollbar { height: 6px; }
         .adm-table-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
-
+        
+        table { width: 100%; border-collapse: collapse; min-width: 1200px; }
+        th { 
+            text-align: left; padding: 1rem 1.25rem; font-size: 0.75rem; font-weight: 700; 
+            color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; 
+            border-bottom: 1px solid var(--border); background: var(--bg-surface);
+            position: sticky; top: 0; z-index: 10;
+        }
+        
+        /* Sticky Actions Column */
+        th:last-child {
+            position: sticky;
+            right: 0;
+            z-index: 30;
+            background: var(--bg-surface);
+            box-shadow: -10px 0 15px rgba(0,0,0,0.3);
+            border-left: 1px solid var(--border);
+        }
+        
         td { padding: 1rem 1.25rem; font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap; }
+        
+        td:last-child, td.td-actions {
+            position: sticky;
+            right: 0;
+            z-index: 20;
+            background: var(--bg-card);
+            box-shadow: -10px 0 20px rgba(0,0,0,0.3);
+            text-align: right;
+            border-left: 1px solid var(--border);
+        }
+        
+        /* Highlight sticky background on row hover */
+        tbody tr:hover td:last-child {
+            background: #111a2e; /* Darker than card row hover to contrast shadow */
+        }
         td.td-name { color: var(--text-primary); font-weight: 600; white-space: normal; min-width: 140px; }
         td.td-email { color: var(--text-muted); font-size: 0.8rem; white-space: normal; word-break: break-all; min-width: 150px; }
         
