@@ -13,6 +13,16 @@
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        @keyframes skeleton-pulse {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .skeleton-card {
+            background: linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 75%);
+            background-size: 200% 100%;
+        }
+    </style>
 </head>
 
 <body class="dashboard-page">
@@ -84,11 +94,15 @@
 
         <!-- My Programs Section -->
         <div id="overview-section" class="dash-section active">
-            <div id="coursesContainer" class="dashboard-courses-list">
-                <!-- Dynamic Course Cards (Loaded by JS) -->
-                <div class="loading-state" style="grid-column: 1/-1; text-align: center; padding: 4rem; opacity: 0.5;">
-                    <i class="fas fa-circle-notch fa-spin" style="font-size: 2rem; display: block; margin-bottom: 1rem;"></i>
-                    <p>Loading your programs...</p>
+            <div id="coursesContainer" class="dashboard-courses-list" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:1.5rem;">
+                <!-- Premium Loading Skeleton -->
+                <div class="skeleton-card" style="height:320px; border:1px solid rgba(255,255,255,0.05); border-radius:16px; overflow:hidden; animation: skeleton-pulse 2s infinite ease-in-out;">
+                    <div style="height:140px; background:rgba(255,255,255,0.02);"></div>
+                    <div style="padding:1.5rem;">
+                        <div style="height:20px; width:70%; background:rgba(255,255,255,0.02); border-radius:4px; margin-bottom:1rem;"></div>
+                        <div style="height:14px; width:40%; background:rgba(255,255,255,0.01); border-radius:4px; margin-bottom:8px;"></div>
+                        <div style="height:44px; width:100%; background:rgba(255,255,255,0.02); border-radius:10px; margin-top:2rem;"></div>
+                    </div>
                 </div>
             </div>
 

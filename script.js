@@ -20,13 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const db      = firebase.firestore();
     const storage = firebase.storage();
 
-    // Admin emails — full access to Admin Console
-    const ADMIN_EMAILS = [
-        'loyalshaheer05@gmail.com',
-        'khan@gmail.com',
-        'shaheer@zalmicareer.com',
-        'admin@zalmicareer.com'
-    ];
+    // Admin email — sole access to Admin Console
+    const ADMIN_EMAILS = ['loyalshaheer05@gmail.com'];
 
     // ============================================================
     //  SCROLL REVEAL (for landing page)
@@ -316,9 +311,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (paymentStep) paymentStep.style.display = 'none';
                 if (formSuccess) {
                     formSuccess.style.display = 'block';
-                    const modalBody = document.querySelector('.adm-modal');
+                    const modalBody = document.querySelector('.enroll-modal');
                     if (modalBody) modalBody.scrollTo({ top: 0, behavior: 'smooth' });
                     if (typeof triggerConfetti === 'function') triggerConfetti();
+                    if (typeof showToast === 'function') showToast('Payment submitted for verification!', 'success');
                 }
 
             } catch (err) {
@@ -354,6 +350,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const btnText = loginForm.querySelector('.auth-submit-btn .btn-text');
             if (btnText) btnText.textContent = 'Create Account';
             document.body.classList.add('signup-mode'); 
+        } else if (params.get('registered') === 'true') {
+            authSubtitle.textContent = 'Registration successful! Please sign in below.';
+            authSubtitle.style.color = 'var(--amber)';
         }
 
         toggleAuth.addEventListener('click', e => {
@@ -385,10 +384,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const email    = document.getElementById('loginEmail')?.value?.trim();
             const password = document.getElementById('loginPassword')?.value;
             const submitBtn = loginForm.querySelector('.auth-submit-btn');
+            const origHtml = submitBtn.innerHTML;
 
             if (!email || !password) return;
 
             submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> SIGNING IN...';
 
             try {
                 if (isLogin) {
@@ -406,7 +407,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         status: 'New Member',
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
-                    window.location.href = 'dashboard.html';
+
+                    // Professional Success Flow
+                    const successModal = document.getElementById('registrationSuccess');
+                    if (successModal) {
+                        successModal.classList.add('active');
+                        if (typeof triggerConfetti === 'function') triggerConfetti();
+                        
+                        // Explicitly sign out so the student can perform a clean manual login
+                        await auth.signOut();
+
+                        // Hard Redirect to Login Page after 2.5 seconds
+                        setTimeout(() => {
+                            window.location.href = 'login.html?registered=true';
+                        }, 2500);
+                    } else {
+                        await auth.signOut();
+                        window.location.href = 'login.html?registered=true';
+                    }
                 }
             } catch (err) {
                 if (authErrorMsg) { authErrorMsg.textContent = err.message; authErrorMsg.style.display = 'block'; }
@@ -421,6 +439,12 @@ document.addEventListener('DOMContentLoaded', () => {
     auth.onAuthStateChanged(async user => {
         if (!user) {
             if (document.body.classList.contains('dashboard-page')) window.location.href = 'login.html';
+            return;
+        }
+
+        // Automatic Redirect from Login page IF user is already authenticated
+        if (document.body.classList.contains('auth-page')) {
+            window.location.href = 'dashboard.html';
             return;
         }
 
@@ -484,12 +508,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         const enrollData = enrollDoc.data();
                         const courseDoc = await db.collection('courses').doc(enrollData.courseId || enrollData.course).get();
                         const c = courseDoc.exists ? courseDoc.data() : { title: enrollData.courseName || enrollData.course, imageUrl: 'assets/course-placeholder.png' };
-                        
+                        const status = enrollData.status || (enrollData.paymentStatus === 'verified' ? 'active' : 'pending');
+
                         html += `
                             <div class="course-card glass-card" style="padding:0; overflow:hidden; border:1px solid rgba(255,255,255,0.05);">
                                 <div class="course-image" style="height:160px; position:relative;">
                                     <img src="${c.imageUrl || 'assets/course-placeholder.png'}" alt="${c.title}" style="width:100%; height:100%; object-fit:cover;">
-                                    <div class="course-tag active" style="position:absolute; top:12px; right:12px; background:var(--amber); color:black; font-weight:700; font-size:0.7rem; padding:4px 10px; border-radius:100px;">ACTIVE BATCH</div>
+                                    <div class="course-tag ${status}" style="position:absolute; top:12px; right:12px; background:${status === 'active' ? 'var(--amber)' : 'rgba(255,255,255,0.1)'}; color:${status === 'active' ? 'black' : 'white'}; font-weight:700; font-size:0.7rem; padding:4px 10px; border-radius:100px;">${status.toUpperCase()}</div>
                                 </div>
                                 <div class="course-content" style="padding:1.5rem;">
                                     <h3 class="course-title" style="font-size:1.1rem; color:white; margin-bottom:1rem;">${c.title}</h3>
@@ -497,12 +522,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <span style="font-size:0.82rem; color:rgba(255,255,255,0.6); display:flex; align-items:center; gap:8px;">
                                             <i class="fas fa-calendar-check" style="color:var(--amber);"></i> ${c.startTime || 'Ongoing'}
                                         </span>
-                                        <span style="font-size:0.82rem; color:rgba(255,255,255,0.6); display:flex; align-items:center; gap:8px;">
-                                            <i class="fas fa-clock" style="color:var(--amber);"></i> ${c.timing || '8 PM - 10 PM'}
-                                        </span>
                                     </div>
-                                    <button onclick="openClassroom('${enrollData.courseId || enrollData.course}')" class="btn btn-primary btn-block" style="border-radius:10px; font-weight:700; letter-spacing:0.05em;">
-                                        <i class="fas fa-door-open"></i> ACCESS CLASSROOM
+                                    <button onclick="openClassroom('${enrollData.courseId || enrollData.course}', '${status}')" class="btn ${status === 'active' ? 'btn-primary' : 'btn-ghost'} btn-block" style="border-radius:10px; font-weight:700; letter-spacing:0.05em; ${status !== 'active' ? 'opacity:0.6;' : ''}">
+                                        <i class="fas ${status === 'active' ? 'fa-door-open' : 'fa-lock'}"></i> ${status === 'active' ? 'ACCESS CLASSROOM' : 'PENDING VERIFICATION'}
                                     </button>
                                 </div>
                             </div>
@@ -511,8 +533,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     coursesContainer.innerHTML = html;
                 }
             }
-            fetchAndRenderCourses(); // Fetch available ones after loading dashboard
-        } catch (err) { console.error('Dashboard data error:', err); }
+            fetchAndRenderCourses(); 
+        } catch (err) { 
+            console.error('Dashboard data error:', err); 
+            if (coursesContainer) coursesContainer.innerHTML = '<p style="color:#f87171; text-align:center; grid-column:1/-1;">Error loading your programs. Please refresh.</p>';
+        }
     }
 
     function initDashboardNav() {
@@ -552,45 +577,304 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================================
     //  ADMIN CONSOLE LOGIC (admin.html)
     // ============================================================
+    // ============================================================
+    //  ADMIN CONSOLE LOGIC (admin.html)
+    // ============================================================
+    let currentAdminFilter = 'all';
+    let enrollmentsData = [];
+
     async function loadAdminData() {
+        const tableBody = document.getElementById('studentsTableBody');
+        if (!tableBody) return;
+
+        tableBody.innerHTML = '<tr><td colspan="11" class="adm-loading"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
+
         try {
             const snap = await db.collection('enrollments').orderBy('submittedAt', 'desc').get();
-            const tableBody = document.getElementById('studentsTableBody');
-            const totalEl    = document.getElementById('adminTotalStudents');
+            enrollmentsData = [];
+            snap.forEach(doc => enrollmentsData.push({ id: doc.id, ...doc.data() }));
+
+            renderAdminTable();
+            updateAdminStats();
+        } catch (err) {
+            console.error('Admin Load Error:', err);
+            tableBody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:3rem; color:#f87171;">Access Denied or Database Error</td></tr>';
+        }
+    }
+
+    function renderAdminTable() {
+        const tableBody = document.getElementById('studentsTableBody');
+        const countEl   = document.getElementById('tableCount');
+        if (!tableBody) return;
+
+        const filtered = enrollmentsData.filter(item => {
+            if (currentAdminFilter === 'all') return true;
+            if (currentAdminFilter === 'pending') return item.status === 'form_submitted' || item.status === 'payment_confirmed';
+            return item.status === currentAdminFilter;
+        });
+
+        if (filtered.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="11" class="adm-empty"><i class="fas fa-folder-open"></i><p>No records found matching this filter.</p></td></tr>';
+            if (countEl) countEl.textContent = '0 records found';
+            return;
+        }
+
+        tableBody.innerHTML = filtered.map((item, i) => {
+            const isPending = item.status === 'form_submitted' || item.status === 'payment_confirmed';
+            const statusClass = isPending ? 'pending' : (item.status === 'active' ? 'active' : 'new');
+            const dateStr = item.submittedAt?.toDate().toLocaleDateString('en-PK', { day:'numeric', month:'short' }) || '—';
             
-            if (totalEl) totalEl.textContent = snap.size;
+            return `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td class="td-name">${sanitize(item.fullName)}</td>
+                    <td class="td-email">${sanitize(item.email)}</td>
+                    <td>${sanitize(item.whatsapp || item.phone)}</td>
+                    <td style="font-size:0.75rem;">${sanitize(item.courseName || item.course)}</td>
+                    <td>${sanitize(item.city || '—')}</td>
+                    <td><span style="font-size:0.7rem; font-weight:600;">${sanitize(item.paymentMethod || '—')}</span></td>
+                    <td>
+                        ${item.receiptUrl ? `<a href="${item.receiptUrl}" target="_blank" style="color:var(--amber); font-size:1.1rem;"><i class="fas fa-file-invoice"></i></a>` : '<span style="opacity:0.2;">—</span>'}
+                    </td>
+                    <td><span class="s-badge ${statusClass}">${item.status.replace('_',' ')}</span></td>
+                    <td>${dateStr}</td>
+                    <td>
+                        <div style="display:flex; gap:6px;">
+                            ${isPending ? `<button onclick="handleEnrollmentAction('${item.id}', 'active')" class="adm-btn adm-btn-sm adm-btn-approve" title="Approve"><i class="fas fa-check"></i></button>` : ''}
+                            ${isPending ? `<button onclick="handleEnrollmentAction('${item.id}', 'rejected')" class="adm-btn adm-btn-sm adm-btn-reject" title="Reject"><i class="fas fa-times"></i></button>` : ''}
+                            <button onclick="viewEnrollmentDetail('${item.id}')" class="adm-btn adm-btn-sm adm-btn-ghost" title="View Detail"><i class="fas fa-eye"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
 
-            let pending = 0;
-            let active  = 0;
-            let rowsHtml = '';
+        if (countEl) countEl.textContent = `${filtered.length} records found`;
+        setText('lastUpdated', 'Last updated: ' + new Date().toLocaleTimeString());
+    }
 
-            snap.forEach((doc, i) => {
-                const item = doc.data();
-                const isPending = item.status === 'form_submitted' || item.status.includes('pending');
-                if (isPending) pending++; else active++;
+    function updateAdminStats() {
+        setText('statTotal', enrollmentsData.length);
+        setText('statPending', enrollmentsData.filter(d => d.status === 'form_submitted' || d.status === 'payment_confirmed').length);
+        setText('statActive', enrollmentsData.filter(d => d.status === 'active').length);
+        
+        // Find top course
+        const counts = {};
+        enrollmentsData.forEach(d => { const c = d.courseName || d.course; counts[c] = (counts[c] || 0) + 1; });
+        const top = Object.entries(counts).sort((a,b) => b[1] - a[1])[0];
+        setText('statTopCourse', top ? top[0] : '—');
+    }
 
-                rowsHtml += `
-                    <tr>
-                        <td>${i + 1}</td>
-                        <td style="font-weight:600;">${item.fullName}</td>
-                        <td>${item.email}</td>
-                        <td>${item.course}</td>
-                        <td>
-                            <span class="status-pill ${isPending ? 'pending' : 'active'}">
-                                ${isPending ? 'Pending' : 'Active'}
-                            </span>
-                        </td>
-                        <td>${item.submittedAt?.toDate().toLocaleDateString() || 'N/A'}</td>
-                    </tr>
+    window.handleEnrollmentAction = async (id, newStatus) => {
+        if (!confirm(`Are you sure you want to ${newStatus} this enrollment?`)) return;
+        
+        try {
+            const updateObj = { status: newStatus, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+            if (newStatus === 'active') {
+                updateObj.paymentStatus = 'verified';
+                updateObj.verifiedAt = firebase.firestore.FieldValue.serverTimestamp();
+                // Optionally generate Roll Number here
+                const enrollment = enrollmentsData.find(e => e.id === id);
+                if (enrollment && !enrollment.rollNumber) {
+                    updateObj.rollNumber = 'ZCP-' + (2026) + '-' + (Math.floor(100+Math.random()*900));
+                }
+            }
+
+            await db.collection('enrollments').doc(id).update(updateObj);
+            showToast(`Enrollment ${newStatus} successfully!`, 'success');
+            loadAdminData(); // Refresh
+        } catch (err) {
+            console.error('Action error:', err);
+            showToast('Failed to update status', 'error');
+        }
+    };
+
+    window.setFilter = (filter, btn) => {
+        currentAdminFilter = filter;
+        document.querySelectorAll('.adm-filter-pill').forEach(b => b.classList.toggle('active', b === btn));
+        renderAdminTable();
+    };
+
+    window.switchView = (view, btn) => {
+        document.querySelectorAll('.adm-nav-item').forEach(b => b.classList.toggle('active', b === btn));
+        const studentsView = document.querySelector('.adm-stats, .adm-table-section'); // Simplified check
+        const coursesView = document.getElementById('courseManagementSection');
+        const viewTitle = document.getElementById('viewTitle');
+
+        if (view === 'courses') {
+            if (coursesView) coursesView.style.display = 'block';
+            document.querySelector('.adm-stats').style.display = 'none';
+            document.querySelector('.adm-table-section').style.display = 'none';
+            if (viewTitle) viewTitle.textContent = 'Course Management';
+            document.getElementById('launchBatchBtn').style.display = 'flex';
+            document.getElementById('refreshBtn').style.display = 'none';
+            document.getElementById('exportBtn').style.display = 'none';
+            loadAdminCourses();
+        } else {
+            if (coursesView) coursesView.style.display = 'none';
+            if (document.querySelector('.adm-stats')) document.querySelector('.adm-stats').style.display = 'grid';
+            if (document.querySelector('.adm-table-section')) document.querySelector('.adm-table-section').style.display = 'block';
+            if (viewTitle) viewTitle.textContent = view.charAt(0).toUpperCase() + view.slice(1) + ' Enrollments';
+            if (document.getElementById('launchBatchBtn')) document.getElementById('launchBatchBtn').style.display = 'none';
+            if (document.getElementById('refreshBtn')) document.getElementById('refreshBtn').style.display = 'flex';
+            if (document.getElementById('exportBtn')) document.getElementById('exportBtn').style.display = 'flex';
+            currentAdminFilter = view === 'students' ? 'all' : view;
+            loadAdminData();
+        }
+    };
+
+    window.viewEnrollmentDetail = (id) => {
+        const item = enrollmentsData.find(e => e.id === id);
+        if (!item) return;
+
+        const modal = document.getElementById('detailModal');
+        const nameEl = document.getElementById('modalName');
+        const gridEl = document.getElementById('modalGrid');
+        
+        if (modal) {
+            if (nameEl) nameEl.textContent = item.fullName;
+            if (gridEl) {
+                gridEl.innerHTML = `
+                    <div class="adm-detail-field">
+                        <div class="adm-detail-label">Email Address</div>
+                        <div class="adm-detail-value">${item.email}</div>
+                    </div>
+                    <div class="adm-detail-field">
+                        <div class="adm-detail-label">WhatsApp</div>
+                        <div class="adm-detail-value">${item.whatsapp || item.phone}</div>
+                    </div>
+                    <div class="adm-detail-field">
+                        <div class="adm-detail-label">Course</div>
+                        <div class="adm-detail-value">${item.courseName || item.course}</div>
+                    </div>
+                    <div class="adm-detail-field">
+                        <div class="adm-detail-label">City</div>
+                        <div class="adm-detail-value">${item.city || '—'}</div>
+                    </div>
+                    <div class="adm-detail-field">
+                        <div class="adm-detail-label">Payment Method</div>
+                        <div class="adm-detail-value">${item.paymentMethod || '—'}</div>
+                    </div>
+                    <div class="adm-detail-field">
+                        <div class="adm-detail-label">Submitted At</div>
+                        <div class="adm-detail-value">${item.submittedAt?.toDate().toLocaleString() || '—'}</div>
+                    </div>
+                    ${item.receiptUrl ? `
+                    <div class="adm-detail-field full">
+                        <div class="adm-detail-label">Payment Receipt</div>
+                        <div style="margin-top:10px; border:1px solid var(--border); border-radius:12px; overflow:hidden;">
+                            <img src="${item.receiptUrl}" style="width:100%; max-height:400px; object-fit:contain; background:#000;">
+                        </div>
+                    </div>` : ''}
+                `;
+            }
+            modal.classList.add('active');
+        }
+    };
+
+    window.closeModal = () => document.getElementById('detailModal').classList.remove('active');
+
+    // Course Management
+    async function loadAdminCourses() {
+        const grid = document.getElementById('coursesCardsGrid');
+        if (!grid) return;
+        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:3rem;"><i class="fas fa-spinner fa-spin fa-2x"></i></div>';
+
+        try {
+            const snap = await db.collection('courses').get();
+            let html = '';
+            snap.forEach(doc => {
+                const c = doc.data();
+                html += `
+                    <div class="course-card glass-card" style="padding:0; overflow:hidden; border:1px solid rgba(255,255,255,0.05);">
+                        <div style="height:120px; position:relative;">
+                            <img src="${c.imageUrl || 'assets/course-placeholder.png'}" style="width:100%; height:100%; object-fit:cover; opacity:0.6;">
+                            <div style="position:absolute; top:12px; right:12px; background:var(--amber); color:black; font-size:0.65rem; font-weight:700; padding:3px 8px; border-radius:4px;">${c.status.toUpperCase()}</div>
+                        </div>
+                        <div style="padding:1.25rem;">
+                            <h3 style="font-size:1rem; color:white; margin-bottom:8px;">${sanitize(c.title)}</h3>
+                            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:1.5rem;">
+                                <div><i class="fas fa-tag"></i> Rs ${c.price}</div>
+                                <div><i class="fas fa-calendar"></i> ${sanitize(c.startTime)}</div>
+                            </div>
+                            <div style="display:flex; gap:8px;">
+                                <button onclick="editCourse('${doc.id}')" class="adm-btn adm-btn-sm adm-btn-ghost" style="flex:1;"><i class="fas fa-edit"></i> Edit</button>
+                                <button onclick="deleteCourse('${doc.id}')" class="adm-btn adm-btn-sm adm-btn-reject" style="flex:0;"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                    </div>
                 `;
             });
-
-            if (tableBody) tableBody.innerHTML = rowsHtml;
-            setText('adminPending', pending);
-            setText('adminActive', active);
-
-        } catch (err) { console.error('Admin Load Error:', err); }
+            grid.innerHTML = html || '<p style="grid-column:1/-1; text-align:center; padding:3rem;">No courses found.</p>';
+        } catch (err) { console.error(err); }
     }
+
+    window.openCourseModal = () => {
+        document.getElementById('courseForm').reset();
+        document.getElementById('courseEditId').value = '';
+        document.getElementById('courseModalTitle').textContent = 'Launch New Batch';
+        document.getElementById('courseModal').classList.add('active');
+    };
+
+    window.closeCourseModal = () => document.getElementById('courseModal').classList.remove('active');
+
+    window.handleCourseSubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('courseEditId').value;
+        const data = {
+            title: document.getElementById('cTitle').value,
+            imageUrl: document.getElementById('cImage').value,
+            startTime: document.getElementById('cStart').value,
+            timing: document.getElementById('cTiming').value,
+            price: document.getElementById('cPrice').value,
+            status: 'live',
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        try {
+            if (id) await db.collection('courses').doc(id).update(data);
+            else {
+                data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                await db.collection('courses').add(data);
+            }
+            showToast('Course saved successfully!', 'success');
+            closeCourseModal();
+            loadAdminCourses();
+        } catch (err) { showToast('Error saving course', 'error'); }
+    };
+
+    window.editCourse = async (id) => {
+        try {
+            const doc = await db.collection('courses').doc(id).get();
+            const c = doc.data();
+            document.getElementById('courseEditId').value = id;
+            document.getElementById('cTitle').value = c.title;
+            document.getElementById('cImage').value = c.imageUrl;
+            document.getElementById('cStart').value = c.startTime;
+            document.getElementById('cTiming').value = c.timing;
+            document.getElementById('cPrice').value = c.price;
+            document.getElementById('courseModalTitle').textContent = 'Edit Course';
+            document.getElementById('courseModal').classList.add('active');
+        } catch (err) { console.error(err); }
+    };
+
+    window.deleteCourse = async (id) => {
+        if (!confirm('Permanently delete this course?')) return;
+        try {
+            await db.collection('courses').doc(id).delete();
+            showToast('Course removed', 'success');
+            loadAdminCourses();
+        } catch (err) { showToast('Error deleting', 'error'); }
+    };
+
+    // Global UI Helpers
+    window.showToast = (msg, type = 'success') => {
+        const toast = document.createElement('div');
+        toast.className = `adm-toast show ${type}`;
+        toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${msg}`;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 500); }, 3000);
+    };
 
     // Helpers
     function setText(id, val) {
@@ -601,7 +885,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================================
     //  CLASSROOM LOGIC (dashboard.html)
     // ============================================================
-    window.openClassroom = async function(courseId) {
+    window.openClassroom = async function(courseId, status) {
+        if (status !== 'active' && status !== 'payment_confirmed') {
+            alert('Access Denied: Your enrollment is still pending verification. Please wait for the admin to approve your payment.');
+            return;
+        }
+        
         const modal = document.getElementById('classroomModal');
         const list = document.getElementById('classroomContentList');
         const titleEl = document.getElementById('classroomTitle');
@@ -723,28 +1012,40 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================================
     //  CONFETTI EFFECT
     // ============================================================
-    function triggerConfetti() {
-        const canvas = document.getElementById('confetti-canvas');
-        if (!canvas) return;
+    window.triggerConfetti = function() {
+        let canvas = document.getElementById('confetti-canvas');
+        if (!canvas) {
+            // Check for auth page success canvas too
+            const authCanvas = document.getElementById('confetti-canvas-auth');
+            if (authCanvas) { canvas = authCanvas; } 
+            else {
+                // Create canvas if not exists
+                const modal = document.querySelector('.enroll-modal.active') || document.querySelector('.adm-modal.active') || document.getElementById('registrationSuccess');
+                if (!modal) return;
+                const newCanvas = document.createElement('canvas');
+                newCanvas.id = 'confetti-canvas';
+                newCanvas.style = 'position:absolute; inset:0; pointer-events:none; z-index:10;';
+                modal.style.position = 'relative';
+                modal.appendChild(newCanvas);
+                return window.triggerConfetti();
+            }
+        }
         const ctx = canvas.getContext('2d');
-        
-        // Match parent modal size
         const parent = canvas.parentElement;
         canvas.width = parent.offsetWidth;
         canvas.height = parent.offsetHeight;
 
         let pieces = [];
-        const numberOfPieces = 80;
         const colors = ['#f59e0b', '#fbbf24', '#ffffff', '#6366f1'];
 
-        for (let i = 0; i < numberOfPieces; i++) {
+        for (let i = 0; i < 80; i++) {
             pieces.push({
                 x: Math.random() * canvas.width,
                 y: Math.random() * canvas.height - canvas.height,
                 rotation: Math.random() * 360,
                 color: colors[Math.floor(Math.random() * colors.length)],
-                size: Math.random() * 7 + 4,
-                gravity: Math.random() * 3 + 2,
+                size: Math.random() * 8 + 4,
+                gravity: Math.random() * 2 + 1,
                 rotationSpeed: Math.random() * 10 - 5
             });
         }
@@ -752,23 +1053,15 @@ document.addEventListener('DOMContentLoaded', () => {
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             pieces.forEach(p => {
-                ctx.save();
-                ctx.translate(p.x, p.y);
-                ctx.rotate(p.rotation * Math.PI / 180);
-                ctx.fillStyle = p.color;
-                ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
-                ctx.restore();
-
-                p.y += p.gravity;
-                p.rotation += p.rotationSpeed;
+                ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rotation * Math.PI / 180); ctx.fillStyle = p.color;
+                ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size); ctx.restore();
+                p.y += p.gravity; p.rotation += p.rotationSpeed;
             });
-
-            if (pieces.some(p => p.y < canvas.height)) {
-                requestAnimationFrame(draw);
-            }
+            if (pieces.some(p => p.y < canvas.height)) requestAnimationFrame(draw);
+            else canvas.remove();
         }
         draw();
-    }
+    };
 
     // ============================================================
     //  DASHBOARD SIDEBAR TOGGLE
