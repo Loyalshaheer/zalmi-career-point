@@ -597,7 +597,8 @@
                     <div class="adm-filters">
                         <button class="adm-filter-pill active" data-filter="all" onclick="setFilter('all', this)">All</button>
                         <button class="adm-filter-pill" data-filter="pending" onclick="setFilter('pending', this)">Pending</button>
-                        <button class="adm-filter-pill" data-filter="active" onclick="setFilter('active', this)">Active</button>
+                        <button class="adm-filter-pill" data-filter="active" onclick="setFilter('active', this)">Verified</button>
+                        <button class="adm-filter-pill" data-filter="rejected" onclick="setFilter('rejected', this)">Rejected</button>
                         <button class="adm-filter-pill" data-filter="content-creation" onclick="setFilter('content-creation', this)">Content AI</button>
                         <button class="adm-filter-pill" data-filter="web-app" onclick="setFilter('web-app', this)">Web & App</button>
                     </div>
@@ -1071,9 +1072,11 @@
         if (currentView === 'active')  rows = rows.filter(r => !r.isPending);
 
         // Pill filter
-        if (currentFilter === 'pending') rows = rows.filter(r => r.isPending);
-        if (currentFilter === 'active')  rows = rows.filter(r => !r.isPending);
-        if (currentFilter !== 'all' && currentFilter !== 'pending' && currentFilter !== 'active') {
+        if (currentFilter === 'pending') rows = rows.filter(r => r.isPending && r.status !== 'rejected');
+        if (currentFilter === 'active')  rows = rows.filter(r => (r.status === 'active' || r.status === 'Verified') && !r.isPending);
+        if (currentFilter === 'rejected') rows = rows.filter(r => r.status === 'rejected');
+        
+        if (currentFilter !== 'all' && currentFilter !== 'pending' && currentFilter !== 'active' && currentFilter !== 'rejected') {
             rows = rows.filter(r => r.course === currentFilter);
         }
 
@@ -1147,13 +1150,16 @@
                 <td>${sanitize(r.ts)}</td>
                 <td>
                     <div style="display:flex; gap:6px;">
-                        <button class="adm-btn adm-btn-sm adm-btn-ghost" onclick="openDetail('${r.id}')">
+                        <button class="adm-btn adm-btn-sm adm-btn-ghost" onclick="openDetail('${r.id}')" title="View Details">
                             <i class="fas fa-eye"></i>
                         </button>
                         ${r.isPending
-                            ? `<button class="adm-btn adm-btn-sm adm-btn-approve" onclick="updateStatus('${r.id}', 'active')"><i class="fas fa-check"></i></button>`
-                            : `<button class="adm-btn adm-btn-sm adm-btn-reject" onclick="updateStatus('${r.id}', 'rejected')"><i class="fas fa-times"></i></button>`
+                            ? `<button class="adm-btn adm-btn-sm adm-btn-approve" onclick="updateStatus('${r.id}', 'active')" title="Approve"><i class="fas fa-check"></i></button>`
+                            : `<button class="adm-btn adm-btn-sm adm-btn-reject" onclick="updateStatus('${r.id}', 'rejected')" title="Reject"><i class="fas fa-times"></i></button>`
                         }
+                        <button class="adm-btn adm-btn-sm adm-btn-reject" onclick="deleteEnrollment('${r.id}')" style="background:rgba(239,68,68,0.1); color:#f87171;" title="Delete Record">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 </td>
             </tr>
@@ -1194,6 +1200,20 @@
         }
     }
 
+    // ── Delete Enrollment ──
+    async function deleteEnrollment(docId) {
+        if (!confirm('Are you sure you want to PERMANENTLY DELETE this enrollment? This action cannot be undone.')) return;
+        
+        try {
+            await db.collection('enrollments').doc(docId).delete();
+            showToast('Record deleted successfully', 'success');
+            await loadData();
+            closeModal();
+        } catch(err) {
+            showToast('Error: ' + err.message, 'error');
+        }
+    }
+
     // ── Detail Modal ──
     function openDetail(id) {
         const r = allRows.find(x => x.id === id);
@@ -1220,32 +1240,63 @@
 
         const grid = document.getElementById('modalGrid');
         if (grid) {
-            grid.innerHTML = fields.map(f => `
-                <div class="adm-detail-field${f.full ? ' full' : ''}">
-                    <div class="adm-detail-label">${f.label}</div>
-                    <div class="adm-detail-value">${sanitize(f.value)}</div>
-                </div>
-            `).join('');
+            grid.innerHTML = fields.map(f => {
+                // Determine if we should sanitize or keep HTML (for links)
+                const displayValue = (f.label === 'Receipt') ? f.value : sanitize(f.value);
+                return `
+                    <div class="adm-detail-field${f.full ? ' full' : ''}">
+                        <div class="adm-detail-label">${f.label}</div>
+                        <div class="adm-detail-value">${displayValue}</div>
+                    </div>
+                `;
+            }).join('');
+
+            // Add Large Receipt Preview if exists
+            if (r.receiptUrl) {
+                grid.innerHTML += `
+                    <div class="adm-detail-field full" style="margin-top:2rem;">
+                        <div class="adm-detail-label">Proof of Payment (Screenshot)</div>
+                        <div style="margin-top:1rem; border:1px solid var(--border); border-radius:12px; overflow:hidden; background:rgba(0,0,0,0.2);">
+                            <img src="${r.receiptUrl}" alt="Payment Receipt" style="width:100%; height:auto; display:block; cursor:zoom-in;" onclick="window.open(this.src)">
+                        </div>
+                        <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.5rem; text-align:center;">Click image to view full size</p>
+                    </div>
+                `;
+            }
         }
 
         const actions = document.getElementById('modalActions');
         if (actions) {
-            let html = r.isPending
-                ? `<button class="adm-btn adm-btn-primary" onclick="updateStatus('${r.id}','active')"><i class="fas fa-check"></i> Approve & Issue ID</button>
-                   <button class="adm-btn adm-btn-reject" onclick="updateStatus('${r.id}','rejected')"><i class="fas fa-times"></i> Reject</button>`
-                : `<button class="adm-btn adm-btn-ghost" onclick="updateStatus('${r.id}','pending_verification')"><i class="fas fa-undo"></i> Set to Pending</button>`;
-            
-            // Add ID CARD button for active students
-            if (!r.isPending) {
-                html += `<button class="adm-btn adm-btn-primary" style="background:#d4af37; color:black;" onclick="openIDCardFromAdmin('${r.id}')">
-                            <i class="fas fa-id-card"></i> View ID Card
-                         </button>`;
-            }
+            let html = `
+                <div style="display:flex; gap:1rem; width:100%; flex-wrap:wrap;">
+                    <div style="display:flex; gap:0.5rem; flex:1; min-width:200px;">
+                        ${r.isPending
+                            ? `<button class="adm-btn adm-btn-primary" onclick="updateStatus('${r.id}','active')" style="flex:1;"><i class="fas fa-check"></i> Approve</button>
+                               <button class="adm-btn adm-btn-reject" onclick="updateStatus('${r.id}','rejected')"><i class="fas fa-times"></i> Reject</button>`
+                            : `<button class="adm-btn adm-btn-ghost" onclick="updateStatus('${r.id}','pending_verification')"><i class="fas fa-undo"></i> Set to Pending</button>`
+                        }
+                        <button class="adm-btn adm-btn-reject" onclick="deleteEnrollment('${r.id}')" style="background:rgba(239,68,68,0.1); color:#f87171;" title="Delete Record">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+
+                    ${!r.isPending && r.status === 'active' ? `
+                        <button class="adm-btn adm-btn-primary" style="background:#d4af37; color:black;" onclick="openIDCardFromAdmin('${r.id}')">
+                            <i class="fas fa-id-card"></i> Student Card
+                        </button>
+                    ` : ''}
+                </div>
+            `;
             actions.innerHTML = html;
         }
 
         document.getElementById('detailModal').classList.add('active');
     }
+
+    // Attach to window safely
+    window.updateStatus = updateStatus;
+    window.openDetail = openDetail;
+    window.deleteEnrollment = deleteEnrollment;
 
     // ── Admin ID Card Logic ──
     window.openIDCardFromAdmin = function(enrollmentId) {
