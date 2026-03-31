@@ -91,11 +91,123 @@
                     <p>Loading your programs...</p>
                 </div>
             </div>
+
+            <!-- Available Programs (For New/Existing Students) -->
+            <div id="available-programs-container" style="margin-top: 4rem; display: none;">
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="font-size: 1.25rem; font-weight: 700; color: white;">Available Programs</h3>
+                    <p style="font-size: 0.88rem; color: var(--text-muted); margin-top: 4px;">Enroll in these industry-leading AI and tech programs to start your journey.</p>
+                </div>
+                <div id="availableCoursesGrid" class="dashboard-courses-list">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
         </div>
     </main>
 
-    <!-- Sidebar Mobile Overlay -->
-    <div class="sidebar-mask" id="sidebarMask"></div>
+    <!-- Enrollment Modal (Integrated from Landing Page) -->
+    <div id="enrollModal" class="adm-modal-overlay">
+        <div class="adm-modal glass-card" style="max-width:700px; border: 1px solid rgba(212, 175, 55, 0.2);">
+            <button class="adm-modal-close modal-close" onclick="closeEnrollModal()" style="color: white; border: none; background: rgba(255,255,255,0.05); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; position: absolute; top: 1.5rem; right: 1.5rem;">
+                <i class="fas fa-times"></i>
+            </button>
+            <div style="margin-bottom: 1.5rem;">
+                <div style="font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--amber); margin-bottom: 4px;">Enrollment Form</div>
+                <h2 id="enrollModalTitle" style="font-size: 1.6rem; font-weight: 700; color: white; letter-spacing: -0.02em;">Secure Your Seat</h2>
+            </div>
+
+            <form id="enrollmentForm">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+                    <div class="pd-form-group">
+                        <label class="pd-form-label" style="display: block; font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.6); margin-bottom: 8px;">Full Name</label>
+                        <div class="pd-input-wrap" style="position: relative;">
+                            <i class="fas fa-user" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.3);"></i>
+                            <input type="text" id="fullName" name="fullName" placeholder="Your full name" required style="width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; padding: 0.75rem 1rem 0.75rem 2.6rem; outline: none;">
+                        </div>
+                    </div>
+                    <div class="pd-form-group">
+                        <label class="pd-form-label" style="display: block; font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.6); margin-bottom: 8px;">WhatsApp Number</label>
+                        <div class="pd-input-wrap" style="position: relative;">
+                            <i class="fab fa-whatsapp" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.3);"></i>
+                            <input type="tel" id="whatsapp" name="whatsapp" placeholder="e.g. 0333 4747734" required style="width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; padding: 0.75rem 1rem 0.75rem 2.6rem; outline: none;">
+                        </div>
+                    </div>
+                    <div class="pd-form-group">
+                        <label class="pd-form-label" style="display: block; font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.6); margin-bottom: 8px;">Current City</label>
+                        <div class="pd-input-wrap" style="position: relative;">
+                            <i class="fas fa-map-marker-alt" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.3);"></i>
+                            <input type="text" id="city" name="city" placeholder="e.g. Lahore" required style="width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; padding: 0.75rem 1rem 0.75rem 2.6rem; outline: none;">
+                        </div>
+                    </div>
+                    <div class="pd-form-group">
+                        <label class="pd-form-label" style="display: block; font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.6); margin-bottom: 8px;">Selected Program</label>
+                        <div class="pd-input-wrap" style="position: relative;">
+                            <i class="fas fa-laptop-code" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.3);"></i>
+                            <select id="course" name="course" required onchange="updateCourseDisplay(this.value)" style="width: 100%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; padding: 0.75rem 1rem 0.75rem 2.6rem; outline: none; appearance: none;">
+                                <option value="" disabled selected>Select a program</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" style="padding: 1rem; font-size: 1rem; border-radius: 12px;">
+                    <span class="btn-text">Proceed to Payment</span> <i class="fas fa-arrow-right"></i>
+                </button>
+            </form>
+
+            <!-- Payment Step -->
+            <div id="paymentStep" style="display:none; padding-top:1.5rem;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem;">
+                    <div style="background: var(--amber); color: black; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem;">2</div>
+                    <h3 style="font-size: 1.2rem; font-weight: 700; color: white;">Confirm Payment</h3>
+                </div>
+                
+                <div class="pd-payment-methods" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem;">
+                    <div class="pd-method-card active" data-method="easypaisa" style="background: rgba(255,255,255,0.03); border: 1px solid var(--amber); border-radius: 10px; padding: 1rem; text-align: center; cursor: pointer; color: var(--amber);">
+                        <i class="fas fa-mobile-alt" style="display: block; font-size: 1.2rem; margin-bottom: 6px;"></i><span style="font-size: 0.75rem; font-weight: 700;">Easypaisa</span>
+                    </div>
+                    <div class="pd-method-card" data-method="jazzcash" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem; text-align: center; cursor: pointer; color: rgba(255,255,255,0.4);">
+                        <i class="fas fa-wallet" style="display: block; font-size: 1.2rem; margin-bottom: 6px;"></i><span style="font-size: 0.75rem; font-weight: 700;">JazzCash</span>
+                    </div>
+                    <div class="pd-method-card" data-method="bank" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem; text-align: center; cursor: pointer; color: rgba(255,255,255,0.4);">
+                        <i class="fas fa-university" style="display: block; font-size: 1.2rem; margin-bottom: 6px;"></i><span style="font-size: 0.75rem; font-weight: 700;">Bank</span>
+                    </div>
+                </div>
+
+                <div style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 1.5rem; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <span style="color: rgba(255,255,255,0.5); font-size: 0.85rem;">Account Number</span>
+                        <span style="color: white; font-weight: 700;" id="accountNumber">03420932464</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <span style="color: rgba(255,255,255,0.5); font-size: 0.85rem;">Account Title</span>
+                        <span style="color: white; font-weight: 700;">Johar Hussain</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-top: 12px; margin-top: 12px;">
+                        <span style="color: rgba(255,255,255,0.5); font-size: 0.85rem;">Total Payable</span>
+                        <span style="color: var(--amber); font-weight: 800; font-size: 1.1rem;" id="amountDue">Rs 3,000</span>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--amber); margin-bottom: 8px;">Upload Payment Receipt</label>
+                    <input type="file" id="paymentReceipt" accept="image/*" style="width: 100%; background: rgba(255,255,255,0.05); border: 1px dashed rgba(212, 175, 55, 0.3); border-radius: 10px; padding: 0.75rem; color: rgba(255,255,255,0.5); font-size: 0.8rem;">
+                </div>
+
+                <button id="confirmPaymentBtn" class="btn btn-primary btn-block" style="padding: 1rem; border-radius: 12px;">
+                    <span class="btn-text">Confirm & Join Program</span>
+                </button>
+            </div>
+
+            <div id="formSuccess" style="display:none; text-align:center; padding: 2rem 0;">
+                <div style="width: 64px; height: 64px; background: rgba(34, 197, 94, 0.1); color: #22c55e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 1.5rem;">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h3 style="font-size:1.5rem; font-weight:700; color: white; margin-bottom: 0.5rem;">Enrollment Received!</h3>
+                <p style="color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-bottom: 2rem;">Our team will verify your payment and activate your classroom within 12-24 hours. You'll receive a notification on WhatsApp.</p>
+                <button onclick="location.reload()" class="btn btn-ghost" style="border-radius: 10px; padding: 0.75rem 2rem;">Go to Dashboard</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Classroom Content Modal -->
     <div class="adm-modal-overlay" id="classroomModal">

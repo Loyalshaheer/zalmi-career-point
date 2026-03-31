@@ -701,7 +701,7 @@
                 <li><a href="#courses">Courses</a></li>
                 <li><a href="#journey">Journey</a></li>
                 <li><a href="login.html"><i class="fas fa-user-circle" style="margin-right:5px;"></i>Portal</a></li>
-                <li><a href="#enroll" class="pd-nav-cta">Enroll Now</a></li>
+                <li><a href="login.html?mode=signup" class="pd-nav-cta">Join Now</a></li>
             </ul>
             <button class="mobile-menu-btn" aria-label="Toggle menu">
                 <i class="fas fa-bars"></i>
@@ -730,7 +730,7 @@
                         generation. <strong>Earn from your phone. Build a future worth living.</strong>
                     </p>
                     <div class="pd-hero-actions">
-                        <a href="#enroll" class="pd-btn-primary">
+                        <a href="login.html?mode=signup" class="pd-btn-primary">
                             Start Your Journey <i class="fas fa-arrow-right"></i>
                         </a>
                         <a href="#about" class="pd-btn-ghost">
@@ -858,7 +858,7 @@
                         <div class="pd-how-icon"><i class="fas fa-file-alt"></i></div>
                         <div class="pd-how-title">1. Fill the Form</div>
                         <div class="pd-how-desc">Complete registration via our simple, secure enrollment form.</div>
-                        <a href="#enroll" class="pd-btn-primary" style="margin-top:1.5rem; font-size:0.82rem; padding:.6rem 1.4rem;">Enroll Now</a>
+                        <a href="login.html?mode=signup" class="pd-btn-primary" style="margin-top:1.5rem; font-size:0.82rem; padding:.6rem 1.4rem;">Get Started</a>
                     </div>
                     <div class="pd-how-card" data-reveal="fade-up" style="transition-delay:.2s">
                         <div class="pd-how-icon" style="background:rgba(37,211,102,0.1); border-color:rgba(37,211,102,0.3); color:#25D366;"><i class="fab fa-whatsapp"></i></div>
@@ -880,131 +880,6 @@
             </div>
         </section>
 
-        <!-- ─── ENROLL MODAL ─── -->
-        <div id="enrollModal" class="pd-modal-overlay">
-            <div class="pd-modal">
-                <button class="pd-modal-close modal-close" aria-label="Close"><i class="fas fa-times"></i></button>
-                <div class="pd-section-label">Enrollment</div>
-                <h2 class="pd-section-title" style="font-size:2rem; margin-bottom:.5rem;">Join Zalmi Career Point</h2>
-                <p style="font-size:.9rem; color:var(--text-muted); margin-bottom:.5rem;">Fill out the form below. Our team will contact you via WhatsApp for verification.</p>
-
-                <form id="enrollmentForm">
-                    <div class="pd-form-grid">
-                        <div class="pd-form-group">
-                            <label class="pd-form-label" for="fullName">Full Name</label>
-                            <div class="pd-input-wrap"><i class="fas fa-user"></i><input type="text" id="fullName" name="fullName" placeholder="Your full name" required></div>
-                        </div>
-                        <div class="pd-form-group">
-                            <label class="pd-form-label" for="whatsapp">WhatsApp Number</label>
-                            <div class="pd-input-wrap"><i class="fab fa-whatsapp"></i><input type="tel" id="whatsapp" name="whatsapp" placeholder="e.g. 0333 4747734" required></div>
-                        </div>
-                        <div class="pd-form-group">
-                            <label class="pd-form-label" for="email">Email Address</label>
-                            <div class="pd-input-wrap"><i class="fas fa-envelope"></i><input type="email" id="email" name="email" placeholder="yourname@gmail.com" required></div>
-                        </div>
-                        <div class="pd-form-group">
-                            <label class="pd-form-label" for="city">City</label>
-                            <div class="pd-input-wrap"><i class="fas fa-map-marker-alt"></i><input type="text" id="city" name="city" placeholder="e.g. Lahore" required></div>
-                        </div>
-                        <div class="pd-form-group">
-                            <label class="pd-form-label" for="occupation">Occupation</label>
-                            <div class="pd-input-wrap">
-                                <i class="fas fa-briefcase"></i>
-                                <select id="occupation" name="occupation" required>
-                                    <option value="" disabled selected>Select occupation</option>
-                                    <option value="student">Student</option>
-                                    <option value="teacher">Teacher</option>
-                                    <option value="professional">Working Professional</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="pd-form-group">
-                            <label class="pd-form-label" for="department">Department / Qualification</label>
-                            <div class="pd-input-wrap"><i class="fas fa-graduation-cap"></i><input type="text" id="department" name="department" placeholder="e.g. BSCS / Intermediate" required></div>
-                        </div>
-                        <div class="pd-form-group">
-                            <label class="pd-form-label" for="referral">How did you hear about us?</label>
-                            <div class="pd-input-wrap"><i class="fas fa-bullhorn"></i><input type="text" id="referral" name="referral" placeholder="e.g. Facebook / Friend" required></div>
-                        </div>
-                        <div class="pd-form-group">
-                            <label class="pd-form-label" for="course">Select Course</label>
-                            <div class="pd-input-wrap">
-                                <i class="fas fa-laptop-code"></i>
-                                <select id="course" name="course" required onchange="updateCourseDisplay(this.value)">
-                                    <option value="" disabled selected>Select a program</option>
-                                    <!-- Dynamic Options from Firestore -->
-                                </select>
-                                <div id="courseStatusMsg" style="display:none; color:var(--amber); font-size:.82rem; margin-top:.5rem; padding:.5rem .8rem; border-radius:8px; background:var(--amber-dim); border:1px solid var(--border-amber);">
-                                    <i class="fas fa-lock" style="margin-right:5px;"></i>
-                                    <span id="courseStatusText">This program is currently not available for enrollment.</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div style="margin-top:1.5rem;">
-                        <button type="submit" class="pd-btn-primary" style="width:100%; padding:1rem; font-size:1rem; justify-content:center;">
-                            <span class="btn-text">Submit Enrollment</span>
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                        <p style="text-align:center; font-size:.8rem; color:var(--text-muted); margin-top:1rem;">
-                            <i class="fas fa-shield-alt" style="color:var(--amber); margin-right:4px;"></i>Your data is secure and used only for verification.
-                        </p>
-                    </div>
-                </form>
-
-                <!-- Payment Step -->
-                <div id="paymentStep" style="display:none; padding-top:1.5rem;">
-                    <h3 style="font-size:1.3rem; font-weight:700; margin-bottom:.5rem;">Step 2: <span style="color:var(--amber);">Select Payment</span></h3>
-                    <p style="font-size:.88rem; color:var(--text-muted); margin-bottom:1.5rem;">Transfer the fee to one of the accounts below to confirm your enrollment.</p>
-                    <div class="pd-payment-methods">
-                        <div class="pd-method-card active" data-method="easypaisa"><i class="fas fa-mobile-alt"></i>Easypaisa</div>
-                        <div class="pd-method-card" data-method="jazzcash"><i class="fas fa-wallet"></i>JazzCash</div>
-                        <div class="pd-method-card" data-method="bank"><i class="fas fa-university"></i>Bank Transfer</div>
-                    </div>
-                    <div class="pd-payment-info">
-                        <div id="methodDetails">
-                            <div class="pd-detail-row"><span class="pd-detail-label">Account Title</span><span class="pd-detail-value" id="accountTitle">Johar Hussain</span></div>
-                            <div class="pd-detail-row"><span class="pd-detail-label">Account Number</span><span class="pd-detail-value" id="accountNumber">03420932464</span></div>
-                            <div class="pd-detail-row"><span class="pd-detail-label">Amount Due</span><span class="pd-detail-value amber" id="amountDue">Rs 3,000</span></div>
-                        </div>
-                        
-                        <!-- Receipt Upload Group -->
-                        <div style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid var(--border-light);">
-                            <label style="display:block; font-size:.85rem; font-weight:700; color:var(--text-primary); margin-bottom:.5rem;">
-                                <i class="fas fa-file-upload" style="color:var(--amber);"></i> Upload Payment Receipt
-                            </label>
-                            <input type="file" id="paymentReceipt" accept="image/*,.pdf" style="width:100%; font-size:.82rem; color:var(--text-muted); background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:.6rem; border-radius:8px;">
-                            <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.4rem;">Upload a screenshot of your transaction (Max 2MB).</p>
-                        </div>
-
-                        <p style="font-size:.82rem; color:var(--text-muted); margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border-light);">
-                            <i class="fas fa-info-circle" style="color:var(--amber); margin-right:4px;"></i>Once paid/uploaded, click confirm. Our team will verify it manually.
-                        </p>
-                    </div>
-                    <button id="confirmPaymentBtn" type="button" class="pd-btn-primary" style="width:100%; margin-top:1.5rem; padding:1rem; font-size:1rem; justify-content:center;">
-                        <span class="btn-text">Confirm My Payment</span>
-                        <i class="fas fa-check-circle"></i>
-                    </button>
-                </div>
-
-                <!-- Success -->
-                <div id="formSuccess" class="pd-success" style="display:none;">
-                    <canvas id="confetti-canvas"></canvas>
-                    <div class="pd-success-icon"><i class="fas fa-check-circle"></i></div>
-                    <h3 style="font-size:1.6rem; font-weight:700; margin-bottom:.75rem; color:var(--text-primary);">Enrollment Complete!</h3>
-                    <p style="color:var(--text-muted); margin-bottom:2rem; font-size:0.95rem; line-height:1.6;">
-                        Your payment receipt has been received. <br>
-                        Our team will verify your transaction and WhatsApp you within 12-24 hours.
-                    </p>
-                    <div style="padding:1.5rem; background:var(--bg-surface); border:1px solid var(--border); border-radius:12px; margin-bottom:2rem;">
-                        <p style="font-size:0.85rem; color:var(--amber); font-weight:600; margin-bottom:4px;">Next Step:</p>
-                        <p style="font-size:0.88rem; color:var(--text-primary);">Keep your WhatsApp active. You will receive your Student Portal Login details soon.</p>
-                    </div>
-                    <button type="button" class="pd-btn-ghost" onclick="location.reload()" style="width:100%; justify-content:center;">Back to Home</button>
-                </div>
-            </div>
-        </div>
 
     </main>
 
@@ -1041,30 +916,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
     <script src="script.js"></script>
-
-    <script>
-        // Enroll modal toggle — overrides old script.js id "enrollModal"
-        document.querySelectorAll('a[href="#enroll"]').forEach(a => {
-            a.addEventListener('click', e => {
-                e.preventDefault();
-                document.getElementById('enrollModal').classList.add('active');
-                document.body.style.overflow = 'hidden';
-            });
-        });
-        document.querySelectorAll('.modal-close').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.getElementById('enrollModal').classList.remove('active');
-                document.body.style.overflow = '';
-            });
-        });
-        document.getElementById('enrollModal').addEventListener('click', e => {
-            if (e.target === e.currentTarget) {
-                e.currentTarget.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-        });
-
-        // Payment method cards
+</body>
+</html>
         document.querySelectorAll('.pd-method-card').forEach(card => {
             card.addEventListener('click', () => {
                 document.querySelectorAll('.pd-method-card').forEach(c => c.classList.remove('active'));

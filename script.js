@@ -74,32 +74,33 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeCourses = [];
 
     async function fetchAndRenderCourses() {
-        const container = document.getElementById('coursesContainer');
-        const select    = document.getElementById('course');
-        if (!container && !select) return;
+        const landingCols = document.getElementById('coursesContainer');
+        const dashGrid    = document.getElementById('availableCoursesGrid');
+        const select      = document.getElementById('course');
+        
+        if (!landingCols && !dashGrid && !select) return;
 
         try {
-            // Fetch all courses to avoid index requirements and casing issues
             const snap = await db.collection('courses').get();
             const allFetched = [];
             snap.forEach(doc => allFetched.push({ id: doc.id, ...doc.data() }));
 
-            // Filter for 'live' (case-insensitive) and sort by date in JS
             activeCourses = allFetched
                 .filter(c => String(c.status || '').toLowerCase() === 'live')
-                .sort((a, b) => {
-                    const da = a.createdAt?.seconds || 0;
-                    const db = b.createdAt?.seconds || 0;
-                    return db - da;
-                });
+                .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 
-            // Render Cards on Landing Page
-            if (container) {
+            // Populate Dropdown (Used in both Index & Dashboard modals)
+            if (select) {
+                select.innerHTML = '<option value="" disabled selected>Select a program</option>' + 
+                    activeCourses.map(c => `<option value="${c.id}">${sanitize(c.title)}</option>`).join('');
+            }
+
+            // Render on Landing Page
+            if (landingCols) {
                 if (activeCourses.length === 0) {
-                    container.innerHTML = `<div style="grid-column: span 12; text-align: center; padding: 4rem; opacity:0.6;"><p>New programs launching soon. Stay tuned!</p></div>`;
+                    landingCols.innerHTML = `<div style="grid-column: span 12; text-align: center; padding: 4rem; opacity:0.6;"><p>New programs launching soon. Stay tuned!</p></div>`;
                 } else {
-                    container.innerHTML = activeCourses.map((c, i) => {
-                        // Bento layout logic: first is featured, rest are third
+                    landingCols.innerHTML = activeCourses.map((c, i) => {
                         const isFeatured = i === 0;
                         const colClass = isFeatured ? 'pd-card-featured' : 'pd-card-third';
                         return `
@@ -113,40 +114,90 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <strong>${sanitize(c.startTime)}</strong><br>
                                         <span style="font-size:0.75rem;">${sanitize(c.timing)}</span>
                                     </div>
-                                    <a href="#enroll" class="pd-btn-primary" style="padding: 0.6rem 1.2rem; font-size: 0.85rem;" onclick="preSelectCourse('${c.id}')">Enroll Now</a>
+                                    <a href="login.html?mode=signup" class="pd-btn-primary" style="padding: 0.6rem 1.2rem; font-size: 0.85rem;">Enroll Now</a>
                                 </div>
                             </div>
                         `;
                     }).join('');
-                    
-                    // Re-init reveal observer for new elements
-                    const newElements = container.querySelectorAll('[data-reveal]');
-                    const observer = new IntersectionObserver((entries) => {
-                        entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('is-revealed'); });
-                    }, { threshold: 0.1 });
-                    newElements.forEach(el => observer.observe(el));
+                    initRevealObserver(landingCols);
                 }
             }
 
-            // Populate Dropdown
-            if (select) {
-                select.innerHTML = '<option value="" disabled selected>Select a program</option>' + 
-                    activeCourses.map(c => `<option value="${c.id}">${sanitize(c.title)}</option>`).join('');
+            // Render on Dashboard (Available Programs)
+            if (dashGrid) {
+                if (activeCourses.length === 0) {
+                    const container = document.getElementById('available-programs-container');
+                    if (container) container.style.display = 'none';
+                } else {
+                    dashGrid.innerHTML = activeCourses.map(c => `
+                        <div class="course-card glass-card" style="padding:0; overflow:hidden; border:1px solid rgba(255,255,255,0.05); transition: 0.3s; height: 100%; display: flex; flex-direction: column;">
+                            <div class="course-image" style="height:140px; position:relative;">
+                                <img src="${c.imageUrl || 'assets/course-placeholder.png'}" alt="${sanitize(c.title)}" style="width:100%; height:100%; object-fit:cover;">
+                                <div style="position:absolute; top:12px; right:12px; background:var(--amber); color:black; font-weight:700; font-size:0.65rem; padding:3px 10px; border-radius:100px;">NEW BATCH</div>
+                            </div>
+                            <div style="padding:1.25rem; flex: 1; display: flex; flex-direction: column;">
+                                <h3 style="font-size:1rem; color:white; margin-bottom:0.75rem;">${sanitize(c.title)}</h3>
+                                <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:1.5rem; flex: 1;">
+                                    <span style="font-size:0.78rem; color:rgba(255,255,255,0.5);"><i class="fas fa-calendar" style="color:var(--amber); margin-right:6px;"></i> ${sanitize(c.startTime)}</span>
+                                    <span style="font-size:0.78rem; color:rgba(255,255,255,0.5);"><i class="fas fa-tag" style="color:var(--amber); margin-right:6px;"></i> Rs ${c.price}</span>
+                                </div>
+                                <button onclick="openEnrollModal('${c.id}')" class="btn btn-primary btn-block" style="border-radius:10px; font-size: 0.8rem; height: 42px;">
+                                    ENROLL NOW
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
             }
 
-        } catch (err) {
-            console.error('Error fetching courses:', err);
-        }
+        } catch (err) { console.error('Error fetching courses:', err); }
     }
 
-    // Helper for "Enroll Now" buttons on cards
-    window.preSelectCourse = (courseId) => {
+    function initRevealObserver(container) {
+        const newElements = container.querySelectorAll('[data-reveal]');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('is-revealed'); });
+        }, { threshold: 0.1 });
+        newElements.forEach(el => observer.observe(el));
+    }
+
+    window.openEnrollModal = async (courseId) => {
+        const modal  = document.getElementById('enrollModal');
         const select = document.getElementById('course');
-        if (select) {
+        if (!modal) return;
+
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        if (courseId && select) {
             select.value = courseId;
             updateCourseDisplay(courseId);
-            document.getElementById('enrollModal').classList.add('active');
-            document.body.style.overflow = 'hidden';
+        }
+
+        // Auto-fill student data from their profile
+        const user = auth.currentUser;
+        if (user) {
+            try {
+                const doc = await db.collection('students').doc(user.uid).get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    const nameInput  = document.getElementById('fullName');
+                    const phoneInput = document.getElementById('whatsapp');
+                    const emailInput = document.getElementById('email'); // if exists
+                    
+                    if (nameInput)  nameInput.value  = data.fullName || '';
+                    if (phoneInput) phoneInput.value = data.phone || '';
+                    if (emailInput) emailInput.value = data.email || user.email;
+                }
+            } catch (err) { console.error('Prefill error:', err); }
+        }
+    };
+
+    window.closeEnrollModal = () => {
+        const modal = document.getElementById('enrollModal');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
         }
     };
 
@@ -199,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const docRef = await db.collection('enrollments').add({
                     ...data,
-                    courseId:       data.course, // store the ID
+                    courseId:       data.course,
                     courseName:     activeCourses.find(c => c.id === data.course)?.title || data.course,
                     status:         'form_submitted',
                     paymentStatus:  'pending',
@@ -213,8 +264,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 enrollForm.style.display = 'none';
                 if (paymentStep) paymentStep.style.display = 'block';
 
-                const modal = document.querySelector('.pd-modal, .enrollment-card');
-                if (modal) modal.scrollTo({ top: 0, behavior: 'smooth' });
+                const modalBody = document.querySelector('.adm-modal');
+                if (modalBody) modalBody.scrollTo({ top: 0, behavior: 'smooth' });
 
             } catch (err) {
                 console.error('Enrollment save error:', err);
@@ -265,9 +316,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (paymentStep) paymentStep.style.display = 'none';
                 if (formSuccess) {
                     formSuccess.style.display = 'block';
-                    const modal = document.querySelector('.pd-modal');
-                    if (modal) modal.scrollTo({ top: 0, behavior: 'smooth' });
-                    triggerConfetti();
+                    const modalBody = document.querySelector('.adm-modal');
+                    if (modalBody) modalBody.scrollTo({ top: 0, behavior: 'smooth' });
+                    if (typeof triggerConfetti === 'function') triggerConfetti();
                 }
 
             } catch (err) {
@@ -292,6 +343,18 @@ document.addEventListener('DOMContentLoaded', () => {
     let isLogin = true;
 
     if (toggleAuth && loginForm) {
+        // Handle URL parameters for mode
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('mode') === 'signup') {
+            isLogin = false;
+            authTitle.textContent = 'Create account';
+            authSubtitle.textContent = 'Join Zalmi Career Point today.';
+            registerFields.style.display = 'block';
+            toggleAuth.textContent = 'Sign in instead';
+            const btnText = loginForm.querySelector('.auth-submit-btn .btn-text');
+            if (btnText) btnText.textContent = 'Create Account';
+        }
+
         toggleAuth.addEventListener('click', e => {
             e.preventDefault();
             isLogin = !isLogin;
@@ -394,19 +457,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Load Student Enrollments
             const enrollSnap = await db.collection('enrollments')
-                .where('email', '==', user.email) // Match by email as backup to UID
+                .where('email', '==', user.email)
                 .where('status', 'in', ['active', 'payment_confirmed'])
                 .get();
 
             const coursesContainer = document.getElementById('coursesContainer');
+            const availContainer   = document.getElementById('available-programs-container');
+
             if (coursesContainer) {
                 if (enrollSnap.empty) {
-                    coursesContainer.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:3rem; opacity:0.5;"><i class="fas fa-box-open fa-2x"></i><p>No active courses found.</p></div>';
+                    coursesContainer.innerHTML = `
+                        <div style="grid-column:1/-1; text-align:center; padding:5rem 2rem; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.1); border-radius:24px;">
+                            <div style="background:var(--amber-dim); color:var(--amber); width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1.5rem; font-size:1.5rem;">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
+                            <h3 style="font-size:1.25rem; color:white; margin-bottom:0.5rem;">Welcome to the Academy!</h3>
+                            <p style="color:var(--text-muted); font-size:0.9rem; max-width:400px; margin:0 auto 1.5rem;">You haven't enrolled in any programs yet. Browse our available courses below to start learning.</p>
+                            <button onclick="document.getElementById('available-programs-container').scrollIntoView({behavior:'smooth'})" class="btn btn-ghost" style="color:var(--amber); font-weight:700;">BROWSE COURSES <i class="fas fa-arrow-down" style="margin-left:8px;"></i></button>
+                        </div>`;
+                    if (availContainer) availContainer.style.display = 'block';
                 } else {
+                    if (availContainer) availContainer.style.display = 'block'; // Keep it visible for multi-course students
                     let html = '';
                     for (const enrollDoc of enrollSnap.docs) {
                         const enrollData = enrollDoc.data();
-                        // Fetch course metadata
                         const courseDoc = await db.collection('courses').doc(enrollData.courseId || enrollData.course).get();
                         const c = courseDoc.exists ? courseDoc.data() : { title: enrollData.courseName || enrollData.course, imageUrl: 'assets/course-placeholder.png' };
                         
@@ -436,6 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     coursesContainer.innerHTML = html;
                 }
             }
+            fetchAndRenderCourses(); // Fetch available ones after loading dashboard
         } catch (err) { console.error('Dashboard data error:', err); }
     }
 
