@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const auth    = firebase.auth();
     const db      = firebase.firestore();
-    const storage = firebase.storage();
+    const storage = (typeof firebase.storage === 'function') ? firebase.storage() : null;
 
     // Admin email — sole access to Admin Console
     const ADMIN_EMAILS = ['loyalshaheer05@gmail.com'];
