@@ -240,9 +240,26 @@
             <div class="classroom-grid" style="display:grid; grid-template-columns: 1fr; gap:0;">
                 <!-- Main Content Area -->
                 <div style="padding:2rem; max-height:75vh; overflow-y:auto;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
                         <div style="font-size:0.9rem; font-weight:600; color:rgba(255,255,255,0.6);">Available Materials & Updates</div>
-                        <div style="font-size:0.8rem; padding:4px 12px; background:var(--amber-dim); color:var(--amber); border-radius:100px; font-weight:700;">LIVE BATCH</div>
+                        <div style="font-size:0.8rem; padding:4px 12px; background:var(--amber-dim); color:var(--amber); border-radius:100px; font-weight:700;">ACTIVE BATCH</div>
+                    </div>
+
+                    <!-- Live Session Hub -->
+                    <div id="liveSessionHub" style="display:none; background:linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05)); border:1px solid rgba(212, 175, 55, 0.2); border-radius:16px; padding:1.5rem; margin-bottom:2rem; position:relative; overflow:hidden;">
+                        <div style="position:absolute; top:0; right:0; padding:8px 12px; background:var(--amber); color:black; font-size:0.65rem; font-weight:800; border-bottom-left-radius:12px; letter-spacing:0.05em;">LIVE NOW</div>
+                        <div style="display:flex; gap:1.5rem; align-items:center;">
+                            <div style="width:50px; height:50px; background:var(--amber); color:black; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.5rem; flex-shrink:0;">
+                                <i class="fas fa-video"></i>
+                            </div>
+                            <div style="flex:1;">
+                                <div style="font-size:0.75rem; color:var(--amber); font-weight:700; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:4px;">Next Live Session</div>
+                                <div id="liveClassTiming" style="font-size:1.1rem; font-weight:700; color:white;">Loading timing...</div>
+                            </div>
+                            <a id="zoomJoinBtn" href="#" target="_blank" class="btn btn-primary" style="padding:0.8rem 1.5rem; border-radius:12px; font-weight:700; background:var(--amber); color:black; border:none; box-shadow:0 10px 20px rgba(212, 175, 55, 0.2);">
+                                Join Zoom Meeting <i class="fas fa-external-link-alt" style="margin-left:8px; font-size:0.8rem;"></i>
+                            </a>
+                        </div>
                     </div>
 
                     <div id="classroomContentList" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:1.25rem;">

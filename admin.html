@@ -768,14 +768,30 @@
                         onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='var(--border)'">
                 </div>
 
-                <!-- Row 2: Image URL -->
+                <!-- Row 2: Image Upload (NATIVE) -->
                 <div style="margin-bottom:1.25rem;">
-                    <label class="adm-detail-label" style="display:block; margin-bottom:6px;">Banner Image URL *</label>
-                    <input type="url" id="cImage" required placeholder="https://images.unsplash.com/..."
+                    <label class="adm-detail-label" style="display:block; margin-bottom:6px;">Batch Banner Image *</label>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <input type="file" id="cImageFile" accept="image/*" 
+                            style="flex:1; padding:0.6rem; border-radius:10px; background:var(--bg-surface); border:1px dashed var(--border); color:var(--text-muted); font-size:0.85rem; cursor:pointer;"
+                            onchange="previewCourseImage(this)">
+                        <input type="hidden" id="cImage">
+                    </div>
+                    <div id="uploadProgressContainer" style="display:none; margin-top:8px;">
+                        <div style="height:4px; width:100%; background:var(--bg-card); border-radius:10px; overflow:hidden;">
+                            <div id="uploadProgressBar" style="height:100%; width:0%; background:var(--amber); transition:width 0.3s;"></div>
+                        </div>
+                        <div id="uploadStatusText" style="font-size:0.7rem; color:var(--amber); margin-top:4px;">Uploading... 0%</div>
+                    </div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Recommended: 1200x600px. Upload from your device.</div>
+                </div>
+
+                <!-- Row 2.1: Zoom & Class Link -->
+                <div style="margin-bottom:1.25rem;">
+                    <label class="adm-detail-label" style="display:block; margin-bottom:6px;">Live Class / Zoom Meeting Link</label>
+                    <input type="url" id="cZoomLink" placeholder="https://zoom.us/j/..."
                         style="width:100%; padding:0.8rem 1rem; border-radius:10px; background:var(--bg-surface); border:1px solid var(--border); color:var(--text-primary); font-family:inherit; font-size:0.95rem; outline:none; transition:border-color 0.2s;"
-                        onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='var(--border)'"
-                        oninput="updateImagePreview(this.value)">
-                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Paste any image URL — Unsplash, Google Drive (direct), etc.</div>
+                        onfocus="this.style.borderColor='var(--amber)'" onblur="this.style.borderColor='var(--border)'">
                 </div>
 
                 <!-- Row 3: Start + Timing -->
@@ -1546,6 +1562,10 @@
         document.getElementById('courseSubmitText').textContent = 'Launch Batch';
         document.getElementById('courseEditId').value = '';
         document.getElementById('courseForm').reset();
+        document.getElementById('cImageFile').value = '';
+        document.getElementById('cImage').value = '';
+        document.getElementById('cZoomLink').value = '';
+        document.getElementById('uploadProgressContainer').style.display = 'none';
         document.getElementById('cStatusLive').checked = true;
         updateImagePreview('');
         document.getElementById('courseModal').classList.add('active');
@@ -1709,6 +1729,7 @@
         document.getElementById('courseEditId').value = c.id;
         document.getElementById('cTitle').value = c.title || '';
         document.getElementById('cImage').value = c.imageUrl || '';
+        document.getElementById('cZoomLink').value = c.zoomLink || '';
         document.getElementById('cStart').value = c.startTime || '';
         document.getElementById('cTiming').value = c.timing || '';
         document.getElementById('cEligibility').value = c.eligibility || '';

@@ -819,22 +819,86 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('courseModal').classList.add('active');
     };
 
+    window.previewCourseImage = (input) => {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => updateImagePreview(e.target.result);
+            reader.readAsDataURL(input.files[0]);
+        }
+    };
+
+    async function uploadCourseImage(file) {
+        if (!file) return null;
+        const progressContainer = document.getElementById('uploadProgressContainer');
+        const progressBar = document.getElementById('uploadProgressBar');
+        const statusText = document.getElementById('uploadStatusText');
+        
+        progressContainer.style.display = 'block';
+        const storageRef = firebase.storage().ref(`course_banners/${Date.now()}_${file.name}`);
+        const uploadTask = storageRef.put(file);
+
+        return new Promise((resolve, reject) => {
+            uploadTask.on('state_changed', 
+                (snap) => {
+                    const progress = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+                    progressBar.style.width = progress + '%';
+                    statusText.textContent = `Uploading... ${progress}%`;
+                },
+                (err) => {
+                    console.error('Upload error:', err);
+                    showToast('Image upload failed', 'error');
+                    reject(err);
+                },
+                async () => {
+                    const url = await uploadTask.snapshot.ref.getDownloadURL();
+                    progressBar.style.width = '100%';
+                    statusText.textContent = 'Upload complete!';
+                    setTimeout(() => progressContainer.style.display = 'none', 1000);
+                    resolve(url);
+                }
+            );
+        });
+    }
+
     window.closeCourseModal = () => document.getElementById('courseModal').classList.remove('active');
 
     window.handleCourseSubmit = async (e) => {
         e.preventDefault();
         const id = document.getElementById('courseEditId').value;
-        const data = {
-            title: document.getElementById('cTitle').value,
-            imageUrl: document.getElementById('cImage').value,
-            startTime: document.getElementById('cStart').value,
-            timing: document.getElementById('cTiming').value,
-            price: document.getElementById('cPrice').value,
-            status: 'live',
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
+        const submitBtn = document.getElementById('courseSubmitBtn');
+        const originalBtnHtml = submitBtn.innerHTML;
+        
+        const fileInput = document.getElementById('cImageFile');
+        let imageUrl = document.getElementById('cImage').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
         try {
+            // Upload new image if selected
+            if (fileInput.files.length > 0) {
+                const uploadedUrl = await uploadCourseImage(fileInput.files[0]);
+                if (uploadedUrl) imageUrl = uploadedUrl;
+            }
+
+            if (!imageUrl) {
+                showToast('Please select a banner image', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnHtml;
+                return;
+            }
+
+            const data = {
+                title: document.getElementById('cTitle').value,
+                imageUrl: imageUrl,
+                zoomLink: document.getElementById('cZoomLink').value || '',
+                startTime: document.getElementById('cStart').value,
+                timing: document.getElementById('cTiming').value,
+                price: document.getElementById('cPrice').value,
+                status: 'live',
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
             if (id) await db.collection('courses').doc(id).update(data);
             else {
                 data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
@@ -842,8 +906,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             showToast('Course saved successfully!', 'success');
             closeCourseModal();
-            loadAdminCourses();
-        } catch (err) { showToast('Error saving course', 'error'); }
+            if (window.loadAdminCourses) window.loadAdminCourses();
+            else location.reload(); // Fallback if admin.html logic is separate
+        } catch (err) { 
+            console.error(err);
+            showToast('Error saving course', 'error'); 
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnHtml;
+        }
     };
 
     window.editCourse = async (id) => {
@@ -851,11 +922,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const doc = await db.collection('courses').doc(id).get();
             const c = doc.data();
             document.getElementById('courseEditId').value = id;
-            document.getElementById('cTitle').value = c.title;
-            document.getElementById('cImage').value = c.imageUrl;
-            document.getElementById('cStart').value = c.startTime;
-            document.getElementById('cTiming').value = c.timing;
-            document.getElementById('cPrice').value = c.price;
+            document.getElementById('cTitle').value = c.title || '';
+            document.getElementById('cImage').value = c.imageUrl || '';
+            document.getElementById('cZoomLink').value = c.zoomLink || '';
+            document.getElementById('cStart').value = c.startTime || '';
+            document.getElementById('cTiming').value = c.timing || '';
+            document.getElementById('cPrice').value = c.price || '';
+            
+            if (window.updateImagePreview) window.updateImagePreview(c.imageUrl || '');
+            
             document.getElementById('courseModalTitle').textContent = 'Edit Course';
             document.getElementById('courseModal').classList.add('active');
         } catch (err) { console.error(err); }
@@ -902,9 +977,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if (list) list.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:3rem;"><i class="fas fa-spinner fa-spin fa-2x"></i><p style="margin-top:1rem;">Entering Classroom...</p></div>';
 
         try {
-            // Fetch course title for header
+            // Fetch course details
             const cDoc = await db.collection('courses').doc(courseId).get();
-            if (cDoc.exists && titleEl) titleEl.textContent = cDoc.data().title;
+            const courseData = cDoc.data() || {};
+            if (cDoc.exists && titleEl) titleEl.textContent = courseData.title;
+
+            // Live Session Hub logic
+            const liveHub = document.getElementById('liveSessionHub');
+            const liveTiming = document.getElementById('liveClassTiming');
+            const joinBtn = document.getElementById('zoomJoinBtn');
+
+            if (liveHub) {
+                if (courseData.zoomLink && courseData.zoomLink.trim() !== '') {
+                    liveHub.style.display = 'block';
+                    if (liveTiming) liveTiming.textContent = courseData.timing || 'Check schedule';
+                    if (joinBtn) joinBtn.href = courseData.zoomLink;
+                } else {
+                    liveHub.style.display = 'none';
+                }
+            }
 
             // Fetch materials
             const snap = await db.collection('courses').doc(courseId).collection('content').orderBy('createdAt', 'desc').get();
