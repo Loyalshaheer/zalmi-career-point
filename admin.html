@@ -966,9 +966,29 @@
                         </div>
 
                         <div style="margin-bottom:1.25rem;">
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                                <input type="checkbox" id="contentIsUpload" style="accent-color:var(--amber);" onchange="toggleContentLink(this.checked)">
+                                <span style="font-size:0.8rem; font-weight:600; color:var(--amber);">Upload file from device</span>
+                            </label>
+                        </div>
+
+                        <div id="contentUrlWrap" style="margin-bottom:1.25rem;">
                             <label class="adm-detail-label" style="display:block; margin-bottom:6px;">URL / Destination</label>
-                            <input type="url" id="contentUrl" required placeholder="https://..."
+                            <input type="url" id="contentUrl" placeholder="https://..."
                                 style="width:100%; padding:0.8rem; border-radius:10px; background:var(--bg-card); border:1px solid var(--border); color:white; outline:none;">
+                        </div>
+
+                        <div id="contentFileWrap" style="margin-bottom:1.25rem; display:none;">
+                            <label class="adm-detail-label" style="display:block; margin-bottom:6px;">Select File (PDF, Image, etc.)</label>
+                            <input type="file" id="contentFile"
+                                style="width:100%; padding:0.6rem; border-radius:10px; background:var(--bg-card); border:1px dashed var(--border); color:var(--text-muted); font-size:0.85rem; cursor:pointer;">
+                            
+                            <div id="contentUploadProgress" style="display:none; margin-top:10px;">
+                                <div style="height:4px; width:100%; background:rgba(0,0,0,0.3); border-radius:10px; overflow:hidden;">
+                                    <div id="contentProgressBar" style="height:100%; width:0%; background:var(--amber); transition:width 0.3s;"></div>
+                                </div>
+                                <div id="contentStatusText" style="font-size:0.65rem; color:var(--amber); margin-top:4px;">Preparing upload...</div>
+                            </div>
                         </div>
 
                         <div style="margin-bottom:2rem;">
@@ -1686,29 +1706,87 @@
         `).join('');
     }
 
+    function toggleContentLink(isUpload) {
+        document.getElementById('contentUrlWrap').style.display = isUpload ? 'none' : 'block';
+        document.getElementById('contentFileWrap').style.display = isUpload ? 'block' : 'none';
+        
+        // Adjust "required" attributes
+        document.getElementById('contentUrl').required = !isUpload;
+        document.getElementById('contentFile').required = isUpload;
+    }
+
+    async function uploadBatchMaterial(courseId, file) {
+        if (!file) return null;
+        const progressContainer = document.getElementById('contentUploadProgress');
+        const progressBar = document.getElementById('contentProgressBar');
+        const statusText = document.getElementById('contentStatusText');
+        
+        progressContainer.style.display = 'block';
+        const storageRef = firebase.storage().ref(`course_materials/${courseId}/${Date.now()}_${file.name}`);
+        const uploadTask = storageRef.put(file);
+
+        return new Promise((resolve, reject) => {
+            uploadTask.on('state_changed', 
+                (snap) => {
+                    const progress = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+                    progressBar.style.width = progress + '%';
+                    statusText.textContent = `Uploading ${file.name}... ${progress}%`;
+                },
+                (err) => reject(err),
+                async () => {
+                    const url = await uploadTask.snapshot.ref.getDownloadURL();
+                    progressBar.style.width = '100%';
+                    statusText.textContent = 'Uploaded!';
+                    setTimeout(() => progressContainer.style.display = 'none', 1000);
+                    resolve(url);
+                }
+            );
+        });
+    }
+
     async function handleContentSubmit(e) {
         e.preventDefault();
         const courseId = document.getElementById('currentContentCourseId').value;
         const btn = e.target.querySelector('button');
         
-        const data = {
-            type:        document.getElementById('contentType').value,
-            title:       document.getElementById('contentTitle').value.trim(),
-            url:         document.getElementById('contentUrl').value.trim(),
-            description: document.getElementById('contentDesc').value.trim(),
-            createdAt:   firebase.firestore.FieldValue.serverTimestamp()
-        };
+        const isUpload = document.getElementById('contentIsUpload').checked;
+        const fileInput = document.getElementById('contentFile');
+        let fileUrl = document.getElementById('contentUrl').value.trim();
 
         btn.disabled = true;
         const oldText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Posting...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing...';
 
         try {
+            if (isUpload && fileInput.files.length > 0) {
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+                fileUrl = await uploadBatchMaterial(courseId, fileInput.files[0]);
+            }
+
+            if (!fileUrl) {
+                showToast('Please provide a URL or upload a file.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = oldText;
+                return;
+            }
+
+            const data = {
+                type:        document.getElementById('contentType').value,
+                title:       document.getElementById('contentTitle').value.trim(),
+                url:         fileUrl,
+                description: document.getElementById('contentDesc').value.trim(),
+                createdAt:   firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Posting...';
             await db.collection('courses').doc(courseId).collection('content').add(data);
+            
             showToast('✅ Material posted to classroom!', 'success');
             document.getElementById('contentForm').reset();
+            if (!isUpload) toggleContentLink(false); // Reset UI if needed
             loadBatchContent(courseId);
         } catch(err) {
+            console.error(err);
             showToast('Error: ' + err.message, 'error');
         } finally {
             btn.disabled = false;

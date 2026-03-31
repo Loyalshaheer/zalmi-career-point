@@ -243,6 +243,29 @@ document.addEventListener('DOMContentLoaded', () => {
             btnText.textContent = 'Saving...';
 
             try {
+                // 1. Duplicate Registration Check (Email & WhatsApp)
+                const emailCheck = await db.collection('enrollments')
+                    .where('courseId', '==', data.course)
+                    .where('email', '==', data.email)
+                    .get();
+
+                const whatsappCheck = await db.collection('enrollments')
+                    .where('courseId', '==', data.course)
+                    .where('whatsapp', '==', data.whatsapp)
+                    .get();
+
+                if (!emailCheck.empty || !whatsappCheck.empty) {
+                    if (typeof showToast === 'function') {
+                        showToast('You are already registered for this program!', 'error');
+                    } else {
+                        alert('Already Registered: You have already submitted an enrollment for this program.');
+                    }
+                    submitBtn.disabled = false;
+                    btnText.textContent = origText;
+                    return;
+                }
+
+                // 2. Proceed with Saving
                 const docRef = await db.collection('enrollments').add({
                     ...data,
                     courseId:       data.course,
