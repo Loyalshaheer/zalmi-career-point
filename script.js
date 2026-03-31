@@ -263,7 +263,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.removeItem('pendingEnrollment');
 
                 if (paymentStep) paymentStep.style.display = 'none';
-                if (formSuccess) formSuccess.style.display = 'block';
+                if (formSuccess) {
+                    formSuccess.style.display = 'block';
+                    const modal = document.querySelector('.pd-modal');
+                    if (modal) modal.scrollTo({ top: 0, behavior: 'smooth' });
+                    triggerConfetti();
+                }
 
             } catch (err) {
                 console.error('Payment confirm error:', err);
@@ -639,4 +644,53 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ============================================================
+    //  CONFETTI EFFECT
+    // ============================================================
+    function triggerConfetti() {
+        const canvas = document.getElementById('confetti-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        
+        // Match parent modal size
+        const parent = canvas.parentElement;
+        canvas.width = parent.offsetWidth;
+        canvas.height = parent.offsetHeight;
+
+        let pieces = [];
+        const numberOfPieces = 80;
+        const colors = ['#f59e0b', '#fbbf24', '#ffffff', '#6366f1'];
+
+        for (let i = 0; i < numberOfPieces; i++) {
+            pieces.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height - canvas.height,
+                rotation: Math.random() * 360,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                size: Math.random() * 7 + 4,
+                gravity: Math.random() * 3 + 2,
+                rotationSpeed: Math.random() * 10 - 5
+            });
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            pieces.forEach(p => {
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation * Math.PI / 180);
+                ctx.fillStyle = p.color;
+                ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+                ctx.restore();
+
+                p.y += p.gravity;
+                p.rotation += p.rotationSpeed;
+            });
+
+            if (pieces.some(p => p.y < canvas.height)) {
+                requestAnimationFrame(draw);
+            }
+        }
+        draw();
+    }
 });
