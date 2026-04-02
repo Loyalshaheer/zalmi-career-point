@@ -2,12 +2,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper: Check if the user is the authorized admin (v5 robust)
+    // Helper: Check if the user is the authorized admin (v6 MASTER KEY)
     function isAdmin() {
       return request.auth != null && (
+        request.auth.uid == 'CNC3AYuNSMgNyOXOtqfnTeGqmw53' ||
         request.auth.token.email == 'loyalshaheer05@gmail.com' ||
-        request.auth.token.email == 'Loyalshaheer05@gmail.com' ||
-        request.auth.token.email == 'LOYALSHAHEER05@GMAIL.COM'
+        request.auth.token.email == 'Loyalshaheer05@gmail.com'
       );
     }
 
