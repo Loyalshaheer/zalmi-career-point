@@ -677,7 +677,9 @@
     </style>
 </head>
 
-<body>
+<body id="top">
+    <!-- Announcement Bar (v5) -->
+    <div id="announcementBar" style="display:none;"></div>
 
     <!-- Dynamic Background Glow (hidden orbs) -->
     <div class="bg-elements">
@@ -774,6 +776,24 @@
             </div>
         </section>
 
+        <!-- ─── LATEST NEWS (v5) ─── -->
+        <section id="news" class="pd-section" style="background:var(--bg-base); border-bottom:1px solid var(--border);">
+            <div class="container">
+                <div data-reveal="fade-up" style="text-align:center; margin-bottom:3rem;">
+                    <div class="pd-section-label">Latest Updates</div>
+                    <h2 class="pd-section-title">ZCP News & Success</h2>
+                    <p class="pd-section-sub centered">Stay updated with our latest announcements, student wins, and batch updates.</p>
+                </div>
+
+                <div class="pd-bento" id="latestNewsGrid">
+                    <!-- Dynamic News Cards will be injected here -->
+                    <div style="grid-column: span 12; text-align: center; padding: 2rem; opacity:0.5;">
+                        <p>Loading updates...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- ─── ABOUT ─── -->
         <section id="about" class="pd-section">
             <div class="container">
@@ -864,7 +884,7 @@
                         <div class="pd-how-icon" style="background:rgba(37,211,102,0.1); border-color:rgba(37,211,102,0.3); color:#25D366;"><i class="fab fa-whatsapp"></i></div>
                         <div class="pd-how-title">2. Get Contacted</div>
                         <div class="pd-how-desc">Our team will reach out via WhatsApp for quick verification.</div>
-                        <a href="https://wa.me/923334747734" target="_blank" class="pd-btn-ghost" style="margin-top:1.5rem; font-size:0.82rem; padding:.6rem 1.4rem; color:#25D366; border-color:rgba(37,211,102,0.3);">+92 333 4747734</a>
+                        <a id="contactWhatsApp" href="https://wa.me/923334747734" target="_blank" class="pd-btn-ghost" style="margin-top:1.5rem; font-size:0.82rem; padding:.6rem 1.4rem; color:#25D366; border-color:rgba(37,211,102,0.3);">WhatsApp Us</a>
                     </div>
                     <div class="pd-how-card" data-reveal="fade-up" style="transition-delay:.3s">
                         <div class="pd-how-icon"><i class="fas fa-users"></i></div>

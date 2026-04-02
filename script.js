@@ -1,3 +1,9 @@
+// Admin emails — sole access to Admin Console (v5 unified)
+const ADMIN_EMAILS = [
+    'loyalshaheer05@gmail.com', 'khan@gmail.com', 'shaheer@zalmicareer.com', 'admin@zalmicareer.com'
+];
+window.ADMIN_EMAILS = ADMIN_EMAILS;
+
 document.addEventListener('DOMContentLoaded', () => {
 
     // ============================================================
@@ -19,9 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const auth    = firebase.auth();
     const db      = firebase.firestore();
     const storage = (typeof firebase.storage === 'function') ? firebase.storage() : null;
-
-    // Admin email — sole access to Admin Console
-    const ADMIN_EMAILS = ['loyalshaheer05@gmail.com'];
 
     // ============================================================
     //  SCROLL REVEAL (for landing page)
@@ -1563,5 +1566,155 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `).join('');
     }
+
+    // --- Command Center: Site Configuration (v5) ---
+    window.fetchSiteConfig = async () => {
+        try {
+            const doc = await db.collection('site_config').doc('main').get();
+            if (doc.exists) {
+                const config = doc.data();
+                window.currentConfig = config;
+                applyConfigToUI(config);
+            } else {
+                console.warn('Site config not found. Using defaults.');
+                const defaultConfig = {
+                    whatsapp: '923334747734',
+                    phone: '+92 333 4747734',
+                    facebook: '#',
+                    instagram: '#',
+                    announcement: { active: false, text: 'Register now for Batch 2026!' }
+                };
+                window.currentConfig = defaultConfig;
+                applyConfigToUI(defaultConfig);
+            }
+        } catch (err) {
+            console.error('Config fetch error:', err);
+        }
+    };
+
+    function applyConfigToUI(config) {
+        // Update Homepage WhatsApp / Phone / Socials
+        const waBtns = document.querySelectorAll('[href*="wa.me"]');
+        waBtns.forEach(btn => btn.href = `https://wa.me/${config.whatsapp}`);
+
+        const phoneBtns = document.querySelectorAll('[href*="tel:"]');
+        phoneBtns.forEach(btn => {
+            btn.href = `tel:${config.whatsapp}`; // Using same number for now as per user request
+            if (btn.textContent.includes('+92')) btn.textContent = config.phone || config.whatsapp;
+        });
+
+        // Update Announcement Bar
+        const annContainer = document.getElementById('announcementBar');
+        if (annContainer) {
+            if (config.announcement?.active) {
+                annContainer.innerHTML = `
+                    <div style="background:var(--amber); color:black; padding:10px; text-align:center; font-size:0.85rem; font-weight:700; position:relative; z-index:9999;">
+                        <i class="fas fa-bullhorn" style="margin-right:8px;"></i>
+                        ${sanitize(config.announcement.text)}
+                        <button onclick="this.parentElement.remove()" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); background:none; border:none; color:black; cursor:pointer; font-size:1.2rem;">&times;</button>
+                    </div>
+                `;
+                annContainer.style.display = 'block';
+            } else {
+                annContainer.style.display = 'none';
+            }
+        }
+    }
+
+    window.updateSiteConfig = async (formData) => {
+        try {
+            await db.collection('site_config').doc('main').set(formData, { merge: true });
+            showToast('Site settings updated!', 'success');
+            fetchSiteConfig();
+        } catch (err) {
+            showToast('Failed to update config', 'error');
+        }
+    };
+
+    // --- Command Center: Posts & News (v5) ---
+    window.loadPosts = async () => {
+        try {
+            const snap = await db.collection('posts').orderBy('createdAt', 'desc').get();
+            window.allPosts = [];
+            snap.forEach(doc => window.allPosts.push({ id: doc.id, ...doc.data() }));
+            
+            // Render on Landing Page grid
+            const newsGrid = document.getElementById('latestNewsGrid');
+            if (newsGrid) renderNewsGrid(newsGrid);
+
+            // Render in Admin if on posts view
+            if (document.getElementById('postsTableBody')) renderPostsTable();
+        } catch (err) {
+            console.error('Posts fetch error:', err);
+        }
+    };
+
+    function renderNewsGrid(container) {
+        if (!window.allPosts.length) {
+            container.innerHTML = `<p style="text-align:center; opacity:0.5; grid-column:1/-1;">Check back later for updates.</p>`;
+            return;
+        }
+        container.innerHTML = window.allPosts.slice(0, 3).map(post => `
+            <div class="pd-card pd-card-third" data-reveal="fade-up" style="height:100%; display:flex; flex-direction:column;">
+                <div class="pd-tag pd-tag-indigo" style="width:fit-content;">${sanitize(post.category || 'Update')}</div>
+                <h3 class="pd-card-sm-title" style="margin-top:1rem;">${sanitize(post.title)}</h3>
+                <p class="pd-card-sm-body" style="flex:1;">${sanitize(post.content)}</p>
+                <div style="margin-top:1.5rem; font-size:0.75rem; color:var(--text-muted); font-weight:600; border-top:1px solid var(--border); padding-top:1rem;">
+                    <i class="far fa-calendar-alt" style="margin-right:6px;"></i>
+                    ${post.createdAt ? new Date(post.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    window.createPost = async (postData) => {
+        try {
+            await db.collection('posts').add({
+                ...postData,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showToast('Post published!', 'success');
+            loadPosts();
+            if (window.closeModal) window.closeModal();
+        } catch (err) {
+            showToast('Failed to post', 'error');
+        }
+    };
+
+    window.deletePost = async (postId) => {
+        if (!confirm('Are you sure you want to delete this post?')) return;
+        try {
+            await db.collection('posts').doc(postId).delete();
+            showToast('Post deleted', 'success');
+            loadPosts();
+        } catch (err) {
+            showToast('Delete failed', 'error');
+        }
+    };
+
+    function renderPostsTable() {
+        const table = document.getElementById('postsTableBody');
+        if (!table) return;
+        if (!window.allPosts.length) {
+            table.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:3rem; opacity:0.5;">No posts yet.</td></tr>`;
+            return;
+        }
+        table.innerHTML = window.allPosts.map(p => `
+            <tr>
+                <td style="font-weight:600; color:white;">${sanitize(p.title)}</td>
+                <td><span class="status-pill status-pending" style="background:var(--indigo-dim); color:#818CF8;">${sanitize(p.category)}</span></td>
+                <td style="font-size:0.85rem; color:var(--text-muted);">${p.createdAt ? new Date(p.createdAt.seconds * 1000).toLocaleDateString() : 'Saving...'}</td>
+                <td style="text-align:right;">
+                    <button class="adm-btn adm-btn-sm adm-btn-ghost" onclick="deletePost('${p.id}')">
+                        <i class="fas fa-trash-alt" style="color:#f87171;"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // Initialize Config & Posts on startup
+    fetchSiteConfig();
+    loadPosts();
 });
 

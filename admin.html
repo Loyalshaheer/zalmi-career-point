@@ -675,6 +675,14 @@
                 <i class="fas fa-graduation-cap"></i> Course Manager
             </button>
 
+            <div class="adm-nav-section">Command Center</div>
+            <button class="adm-nav-item" data-view="posts" onclick="switchView('posts', this)">
+                <i class="fas fa-newspaper"></i> News & Posts
+            </button>
+            <button class="adm-nav-item" data-view="settings" onclick="switchView('settings', this)">
+                <i class="fas fa-cog"></i> Site Settings
+            </button>
+
             <div class="adm-nav-section">Actions</div>
             <a href="dashboard.html" class="adm-nav-item">
                 <i class="fas fa-th-large"></i> Student Dashboard
@@ -708,19 +716,25 @@
                 <div class="adm-topbar-sub">Real-time data from Firestore</div>
             </div>
             <div class="adm-topbar-actions" id="adminHeaderActions">
-                <!-- Student View Actions -->
-                <button id="refreshBtn" class="adm-btn adm-btn-ghost" onclick="loadAdminData()">
+                <!-- Generic Refresh -->
+                <button id="refreshBtn" class="adm-btn adm-btn-ghost" onclick="location.reload()">
                     <i class="fas fa-sync-alt"></i> Refresh
                 </button>
-                <button id="exportBtn" class="adm-btn adm-btn-excel" onclick="exportToXL()">
-                    <i class="fas fa-file-excel"></i> Export to Sheet
+
+                <!-- Student View Actions -->
+                <button id="exportBtn" class="adm-btn adm-btn-excel" onclick="exportToXL()" style="display:inline-flex;">
+                    <i class="fas fa-file-excel"></i> Export Students
                 </button>
 
-                <!-- Course View Actions (Hidden by default) -->
+                <!-- Course View Actions -->
                 <button id="launchBatchBtn" class="adm-btn adm-btn-primary" onclick="openCourseModal()" style="display:none; background:var(--amber); color:black;">
-                    <i class="fas fa-plus"></i> Launch New Batch
+                    <i class="fas fa-plus"></i> Launch Batch
                 </button>
-            </div>
+
+                <!-- Post View Actions -->
+                <button id="createPostBtn" class="adm-btn adm-btn-primary" onclick="openPostModal()" style="display:none; background:var(--indigo-600); color:white; border-color:var(--indigo-400);">
+                    <i class="fas fa-pen-nib"></i> New Post
+                </button>
             </div>
         </div>
 
@@ -836,18 +850,107 @@
 
             </div>
 
+            <!-- News & Posts Section (Hidden by default) -->
+            <div id="postsManagementSection" style="display: none;">
+                <div style="margin-bottom:2rem;">
+                    <div style="font-size:0.72rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--indigo-400); margin-bottom:4px;">Content Hub</div>
+                    <div style="font-size:1.3rem; font-weight:700; color:var(--text-primary);">Posts & News Feed</div>
+                    <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">Create cards that appear on the homepage "Latest Updates" section.</div>
+                </div>
+
+                <div class="adm-table-wrap" style="background:var(--bg-card); border:1px solid var(--border); border-radius:18px; padding:1.5rem;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Post Title</th>
+                                <th>Category</th>
+                                <th>Date</th>
+                                <th style="text-align:right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="postsTableBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Site Settings Section (Hidden by default) -->
+            <div id="settingsSection" style="display: none;">
+                <div style="margin-bottom:2rem;">
+                    <div style="font-size:0.72rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--amber); margin-bottom:4px;">Global Configuration</div>
+                    <div style="font-size:1.3rem; font-weight:700; color:var(--text-primary);">Website Control Panel</div>
+                    <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">Update WhatsApp links, social media, and site-wide announcements.</div>
+                </div>
+
+                <form id="siteSettingsForm" onsubmit="event.preventDefault(); saveSiteSettings();" style="max-width:600px; display:flex; flex-direction:column; gap:2rem;">
+                    <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:18px; padding:2rem; display:flex; flex-direction:column; gap:1.5rem;">
+                        <h3 style="font-size:1rem; font-weight:700; color:white; border-bottom:1px solid var(--border); padding-bottom:1rem; margin-bottom:0.5rem;">Contact Information</h3>
+                        
+                        <div class="adm-input-group">
+                            <label class="adm-label">WhatsApp Number (e.g. 923334747734)</label>
+                            <input type="text" id="settingWhatsApp" class="adm-input" placeholder="920000000000">
+                        </div>
+                        <div class="adm-input-group">
+                            <label class="adm-label">Public Phone Number</label>
+                            <input type="text" id="settingPhone" class="adm-input" placeholder="+92 000 0000000">
+                        </div>
+                    </div>
+
+                    <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:18px; padding:2rem; display:flex; flex-direction:column; gap:1.5rem;">
+                        <h3 style="font-size:1rem; font-weight:700; color:white; border-bottom:1px solid var(--border); padding-bottom:1rem; margin-bottom:0.5rem;">Announcement Bar</h3>
+                        
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <input type="checkbox" id="settingAnnActive" style="width:20px; height:20px; accent-color:var(--amber);">
+                            <label class="adm-label" style="margin:0;">Show announcement bar on top of website</label>
+                        </div>
+                        <div class="adm-input-group">
+                            <label class="adm-label">Announcement Text</label>
+                            <input type="text" id="settingAnnText" class="adm-input" placeholder="e.g. Batch 2026 Registration is Open!">
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:1rem;">
+                        <button type="submit" class="adm-btn adm-btn-primary" style="padding:0.8rem 2rem;">SAVE ALL CHANGES</button>
+                    </div>
+                </form>
+            </div>
+
         </div>
     </div>
 
-    <!-- Student Detail Modal -->
-    <div class="adm-modal-overlay" id="detailModal">
-        <div class="adm-modal">
+    <!-- Post Creation Modal -->
+    <div class="adm-modal-overlay" id="postModal" style="z-index:9010;">
+        <div class="adm-modal" style="max-width:500px;">
             <button class="adm-modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
             <div style="margin-bottom:1.5rem;">
-                <div style="font-size:0.72rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--amber); margin-bottom:4px;">Enrollment Details</div>
-                <h2 id="modalName" style="font-size:1.5rem; font-weight:700; color:var(--text-primary); letter-spacing:-0.02em;"></h2>
-                <div id="modalStatus" style="margin-top:6px;"></div>
+                <div style="font-size:0.72rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--indigo-400); margin-bottom:4px;">Content Manager</div>
+                <h2 style="font-size:1.5rem; font-weight:700; color:var(--text-primary);">Create New Post</h2>
             </div>
+            
+            <div style="display:flex; flex-direction:column; gap:1.25rem;">
+                <div class="adm-input-group">
+                    <label class="adm-label">Post Title</label>
+                    <input type="text" id="postTitle" class="adm-input" placeholder="Enter headline...">
+                </div>
+                <div class="adm-input-group">
+                    <label class="adm-label">Category</label>
+                    <select id="postCategory" class="adm-input" style="background:var(--bg-surface); border:1px solid var(--border); color:white; padding:0.8rem; border-radius:10px;">
+                        <option value="Update">General Update</option>
+                        <option value="Success">Success Story</option>
+                        <option value="News">Announcement</option>
+                    </select>
+                </div>
+                <div class="adm-input-group">
+                    <label class="adm-label">Content</label>
+                    <textarea id="postContent" class="adm-input" style="height:120px; resize:none;" placeholder="Write your post content here..."></textarea>
+                </div>
+                <button class="adm-btn adm-btn-primary" onclick="saveNewPost()" style="background:var(--indigo-600); border-color:var(--indigo-400); padding:0.8rem;">
+                    <i class="fas fa-paper-plane"></i> PUBLISH POST
+                </button>
+            </div>
+        </div>
+    </div>
             <div class="adm-detail-grid" id="modalGrid"></div>
             <div style="display:flex; gap:0.75rem; margin-top:2rem; flex-wrap:wrap;" id="modalActions"></div>
         </div>
@@ -1164,21 +1267,12 @@
     const auth = firebase.auth();
     const db   = firebase.firestore();
 
-    const ADMIN_EMAILS = [
-        'loyalshaheer05@gmail.com',
-        'khan@gmail.com',
-        'shaheer@zalmicareer.com',
-        'admin@zalmicareer.com'
-    ];
-
-    // ── State (Mirrored/Managed in script.js) ──
-    const ADMIN_EMAILS = [
-        'loyalshaheer05@gmail.com', 'khan@gmail.com', 'shaheer@zalmicareer.com', 'admin@zalmicareer.com'
-    ];
-
     // ── Auth Guard ──
     auth.onAuthStateChanged(user => {
-        if (!user || !ADMIN_EMAILS.includes(user.email.toLowerCase())) {
+        const allowed = window.ADMIN_EMAILS || [
+            'loyalshaheer05@gmail.com', 'khan@gmail.com', 'shaheer@zalmicareer.com', 'admin@zalmicareer.com'
+        ];
+        if (!user || !allowed.includes(user.email.toLowerCase())) {
             window.location.href = 'admin-login.html';
             return;
         }
@@ -1264,7 +1358,11 @@
         document.getElementById('detailModal').classList.add('active');
     };
 
-    window.closeModal = () => document.getElementById('detailModal').classList.remove('active');
+    window.closeModal = () => {
+        document.getElementById('detailModal').classList.remove('active');
+        const postModal = document.getElementById('postModal');
+        if (postModal) postModal.classList.remove('active');
+    };
 
     window.handleSingleDelete = async (id) => {
         if (!confirm('Permanently delete this record?')) return;
@@ -1284,22 +1382,80 @@
 
         const studentTable   = document.querySelector('.adm-table-section'); 
         const courseSection  = document.getElementById('courseManagementSection');
+        const postsSection   = document.getElementById('postsManagementSection');
+        const settingsSection = document.getElementById('settingsSection');
         const statsSection   = document.querySelector('.adm-stats');
 
-        const isCourseView = view === 'courses';
-        if (studentTable)  studentTable.style.display = isCourseView ? 'none' : 'block';
-        if (statsSection)  statsSection.style.display = isCourseView ? 'none' : 'grid';
-        if (courseSection) courseSection.style.display = isCourseView ? 'block' : 'none';
+        const isStudentView = ['students', 'pending', 'active'].includes(view);
+        
+        if (studentTable)  studentTable.style.display = isStudentView ? 'block' : 'none';
+        if (statsSection)  statsSection.style.display = isStudentView ? 'grid' : 'none';
+        if (courseSection) courseSection.style.display = (view === 'courses') ? 'block' : 'none';
+        if (postsSection)  postsSection.style.display  = (view === 'posts') ? 'block' : 'none';
+        if (settingsSection) settingsSection.style.display = (view === 'settings') ? 'block' : 'none';
 
-        document.getElementById('refreshBtn').style.display = isCourseView ? 'none' : 'flex';
-        document.getElementById('exportBtn').style.display = isCourseView ? 'none' : 'flex';
-        document.getElementById('launchBatchBtn').style.display = isCourseView ? 'flex' : 'none';
+        // Toggle Header Buttons
+        document.getElementById('exportBtn').style.display = isStudentView ? 'inline-flex' : 'none';
+        document.getElementById('launchBatchBtn').style.display = (view === 'courses') ? 'flex' : 'none';
+        document.getElementById('createPostBtn').style.display = (view === 'posts') ? 'flex' : 'none';
 
-        const titles = { students: 'All Enrollments', pending: 'Pending Verification', active: 'Active Students', courses: 'Course Management' };
+        const titles = { 
+            students: 'All Enrollments', 
+            pending: 'Pending Verification', 
+            active: 'Active Students', 
+            courses: 'Course Management',
+            posts: 'News & Updates',
+            settings: 'Site Configuration'
+        };
         const titleEl = document.getElementById('viewTitle');
-        if (titleEl) titleEl.textContent = titles[view] || 'Students';
+        if (titleEl) titleEl.textContent = titles[view] || 'Control Center';
 
-        if (!isCourseView) window.applyAdminFilter();
+        if (isStudentView) window.applyAdminFilter();
+        if (view === 'posts' && window.loadPosts) window.loadPosts();
+        if (view === 'settings') loadSettingsToForm();
+    };
+
+    // --- Settings Helpers ---
+    async function loadSettingsToForm() {
+        if (!window.currentConfig) await window.fetchSiteConfig();
+        const c = window.currentConfig;
+        if (!c) return;
+        document.getElementById('settingWhatsApp').value = c.whatsapp || '';
+        document.getElementById('settingPhone').value = c.phone || '';
+        document.getElementById('settingAnnActive').checked = c.announcement?.active || false;
+        document.getElementById('settingAnnText').value = c.announcement?.text || '';
+    }
+
+    window.saveSiteSettings = () => {
+        const data = {
+            whatsapp: document.getElementById('settingWhatsApp').value.trim(),
+            phone: document.getElementById('settingPhone').value.trim(),
+            announcement: {
+                active: document.getElementById('settingAnnActive').checked,
+                text: document.getElementById('settingAnnText').value.trim()
+            }
+        };
+        if (window.updateSiteConfig) window.updateSiteConfig(data);
+    };
+
+    // --- Post Helpers ---
+    window.openPostModal = () => {
+        document.getElementById('postModal').classList.add('active');
+    };
+
+    window.saveNewPost = () => {
+        const title = document.getElementById('postTitle').value.trim();
+        const content = document.getElementById('postContent').value.trim();
+        const category = document.getElementById('postCategory').value;
+        
+        if (!title || !content) return alert('Please fill title and content');
+        
+        if (window.createPost) {
+            window.createPost({ title, content, category });
+            // Reset form
+            document.getElementById('postTitle').value = '';
+            document.getElementById('postContent').value = '';
+        }
     };
 
     // ── Helpers ──
