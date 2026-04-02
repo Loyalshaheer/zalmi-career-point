@@ -1585,6 +1585,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.announcement) merged.announcement = { ...defaultConfig.announcement, ...data.announcement };
                 window.currentConfig = merged;
                 applyConfigToUI(merged);
+
+                // Populate Admin Form if on Settings View
+                if (document.getElementById('siteSettingsForm')) {
+                    document.getElementById('settingWhatsApp').value = merged.whatsapp || '';
+                    document.getElementById('settingPhone').value = merged.phone || '';
+                    document.getElementById('settingAnnActive').checked = merged.announcement?.active || false;
+                    document.getElementById('settingAnnText').value = merged.announcement?.text || '';
+                }
             } else {
                 console.warn('Site config not found. Using defaults.');
                 window.currentConfig = defaultConfig;
@@ -1701,6 +1709,35 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             showToast('Delete failed', 'error');
         }
+    };
+
+    // --- Admin Form Helpers (v5) ---
+    window.saveSiteSettings = async () => {
+        const formData = {
+            whatsapp: document.getElementById('settingWhatsApp').value.trim(),
+            phone: document.getElementById('settingPhone').value.trim(),
+            announcement: {
+                active: document.getElementById('settingAnnActive').checked,
+                text: document.getElementById('settingAnnText').value.trim()
+            }
+        };
+        await window.updateSiteConfig(formData);
+    };
+
+    window.saveNewPost = async () => {
+        const postData = {
+            title: document.getElementById('postTitle').value.trim(),
+            category: document.getElementById('postCategory').value,
+            content: document.getElementById('postContent').value.trim()
+        };
+        if (!postData.title || !postData.content) {
+            showToast('Title and Content are required', 'error');
+            return;
+        }
+        await window.createPost(postData);
+        // Reset form
+        document.getElementById('postTitle').value = '';
+        document.getElementById('postContent').value = '';
     };
 
     function renderPostsTable() {
