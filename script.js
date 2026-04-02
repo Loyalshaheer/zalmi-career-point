@@ -626,8 +626,10 @@ document.addEventListener('DOMContentLoaded', () => {
             renderAdminTable();
             updateAdminStats();
         } catch (err) {
-            console.error('Admin Load Error:', err);
-            tableBody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:3rem; color:#f87171;">Access Denied or Database Error</td></tr>';
+            console.error('[ZCP Auth] Admin Load Error:', err);
+            const _u = firebase.auth().currentUser;
+            console.log('[ZCP Auth] Logged in as:', _u ? _u.email : 'No active session');
+            tableBody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding:3rem; color:#f87171; border:none;">Access Denied or Database Error<br><small style="opacity:0.6; font-weight:400; margin-top:8px; display:block;">Technical detail: ${err.message}</small></td></tr>`;
         }
     }
 
