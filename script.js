@@ -1763,8 +1763,46 @@ document.addEventListener('DOMContentLoaded', () => {
         `).join('');
     }
 
-    // Initialize Config & Posts on startup
-    fetchSiteConfig();
-    loadPosts();
+    // ============================================================
+    //  SECURE ADMIN GATE (Centralized v6)
+    // ============================================================
+    if (window.location.pathname.includes('admin.html')) {
+        auth.onAuthStateChanged(user => {
+            const allowed = window.ADMIN_EMAILS || ['loyalshaheer05@gmail.com'];
+            
+            if (!user || !allowed.includes(user.email.toLowerCase())) {
+                console.warn('[ZCP Auth] Unauthorized access or session expired.');
+                window.location.href = 'admin-login.html';
+                return;
+            }
+
+            // Diagnostic Log (Root-Cause Fix)
+            console.log('%c [ZCP MASTER AUTH] ', 'background:#10b981; color:white; padding:4px; font-weight:700;', 'Authorized Admin:', user.email);
+            console.log('%c [ZCP MASTER UID] ', 'background:#3b82f6; color:white; padding:4px; font-weight:700;', user.uid);
+
+            // Populate Sidebar Profile
+            const nameSub = user.email.split('@')[0];
+            const adminNameEl = document.getElementById('adminName');
+            if (adminNameEl) adminNameEl.textContent = nameSub.charAt(0).toUpperCase() + nameSub.slice(1);
+            
+            const adminEmailEl = document.getElementById('adminEmailDisplay');
+            if (adminEmailEl) adminEmailEl.textContent = user.email;
+
+            // Trigger Global Data Load
+            fetchSiteConfig();
+            loadPosts();
+            if (typeof window.loadAdminData === 'function') window.loadAdminData();
+            if (typeof window.loadCourses === 'function') window.loadCourses();
+        });
+
+        // Logout listener
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                auth.signOut().then(() => window.location.href = 'admin-login.html');
+            });
+        }
+    }
 });
 
