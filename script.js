@@ -1568,22 +1568,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Command Center: Site Configuration (v5) ---
+    const defaultConfig = {
+        whatsapp: '923334747734',
+        phone: '+92 333 4747734',
+        facebook: '#',
+        instagram: '#',
+        announcement: { active: false, text: 'Register now for Batch 2026!' }
+    };
+
     window.fetchSiteConfig = async () => {
         try {
             const doc = await db.collection('site_config').doc('main').get();
             if (doc.exists) {
-                const config = doc.data();
-                window.currentConfig = config;
-                applyConfigToUI(config);
+                const data = doc.data();
+                const merged = { ...defaultConfig, ...data };
+                if (data.announcement) merged.announcement = { ...defaultConfig.announcement, ...data.announcement };
+                window.currentConfig = merged;
+                applyConfigToUI(merged);
             } else {
                 console.warn('Site config not found. Using defaults.');
-                const defaultConfig = {
-                    whatsapp: '923334747734',
-                    phone: '+92 333 4747734',
-                    facebook: '#',
-                    instagram: '#',
-                    announcement: { active: false, text: 'Register now for Batch 2026!' }
-                };
                 window.currentConfig = defaultConfig;
                 applyConfigToUI(defaultConfig);
             }
@@ -1593,24 +1596,30 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     function applyConfigToUI(config) {
-        // Update Homepage WhatsApp / Phone / Socials
+        if (!config) return;
+
+        // Update Homepage WhatsApp
         const waBtns = document.querySelectorAll('[href*="wa.me"]');
-        waBtns.forEach(btn => btn.href = `https://wa.me/${config.whatsapp}`);
+        if (config.whatsapp) waBtns.forEach(btn => btn.href = `https://wa.me/${config.whatsapp}`);
 
+        // Update Phone (Removing spaces for tel: link)
         const phoneBtns = document.querySelectorAll('[href*="tel:"]');
-        phoneBtns.forEach(btn => {
-            btn.href = `tel:${config.whatsapp}`; // Using same number for now as per user request
-            if (btn.textContent.includes('+92')) btn.textContent = config.phone || config.whatsapp;
-        });
+        if (config.phone) {
+            const cleanPhone = config.phone.replace(/\s+/g, '');
+            phoneBtns.forEach(btn => {
+                btn.href = `tel:${cleanPhone}`;
+                if (btn.innerText.includes('+92')) btn.innerText = config.phone;
+            });
+        }
 
-        // Update Announcement Bar
+        // Announcement Bar
         const annContainer = document.getElementById('announcementBar');
         if (annContainer) {
-            if (config.announcement?.active) {
+            if (config.announcement && config.announcement.active) {
                 annContainer.innerHTML = `
                     <div style="background:var(--amber); color:black; padding:10px; text-align:center; font-size:0.85rem; font-weight:700; position:relative; z-index:9999;">
                         <i class="fas fa-bullhorn" style="margin-right:8px;"></i>
-                        ${sanitize(config.announcement.text)}
+                        ${sanitize(config.announcement.text || '')}
                         <button onclick="this.parentElement.remove()" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); background:none; border:none; color:black; cursor:pointer; font-size:1.2rem;">&times;</button>
                     </div>
                 `;
