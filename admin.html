@@ -1171,14 +1171,10 @@
         'admin@zalmicareer.com'
     ];
 
-    // ── State ──
-    let allRows     = [];
-    let allCourses  = [];
-    let filteredRows = [];
-    let currentFilter = 'all';
-    let currentView   = 'students';
-    let sortKey       = 'ts';
-    let sortAsc       = false;
+    // ── State (Mirrored/Managed in script.js) ──
+    const ADMIN_EMAILS = [
+        'loyalshaheer05@gmail.com', 'khan@gmail.com', 'shaheer@zalmicareer.com', 'admin@zalmicareer.com'
+    ];
 
     // ── Auth Guard ──
     auth.onAuthStateChanged(user => {
@@ -1189,826 +1185,136 @@
         const name = user.email.split('@')[0];
         const el   = document.getElementById('adminName');
         if (el) el.textContent = name.charAt(0).toUpperCase() + name.slice(1);
-        loadData();
-        loadCourses();
+        
+        // Initial Data Load from script.js
+        if (window.loadAdminData) window.loadAdminData();
+        if (window.loadCourses) window.loadCourses();
     });
 
     // ── Logout ──
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-        auth.signOut().then(() => window.location.href = 'admin-login.html');
-    });
-
-    // ── Load Data ──
-    async function loadData() {
-        const btn = document.getElementById('refreshBtn');
-        if (btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading…'; btn.disabled = true; }
-
-        try {
-            const snap = await db.collection('enrollments').orderBy('submittedAt', 'desc').get();
-            allRows = [];
-
-            snap.forEach((doc, i) => {
-                const d  = doc.data();
-                const ts = d.submittedAt?.toDate?.() || d.confirmedAt?.toDate?.() || null;
-                const isPending = ['form_submitted','pending_verification','payment_confirmed']
-                                   .includes(d.status) || d.paymentStatus === 'pending_verification';
-
-                allRows.push({
-                    id:            doc.id,
-                    idx:           0, // set later
-                    fullName:      d.fullName      || '—',
-                    email:         d.email         || '—',
-                    whatsapp:      d.whatsapp || d.phone || '—',
-                    course:        d.course        || '—',
-                    city:          d.city          || '—',
-                    occupation:    d.occupation    || '—',
-                    department:    d.department    || '—',
-                    referral:      d.referral      || '—',
-                    paymentMethod: d.paymentMethod || '—',
-                    receiptUrl:    d.receiptUrl    || null,
-                    status:        d.status        || 'form_submitted',
-                    paymentStatus: d.paymentStatus || '—',
-                    isPending,
-                    tsObj:         ts,
-                    ts:            ts ? ts.toLocaleDateString('en-PK') : '—'
-                });
-            });
-
-            updateStats();
-            applyFilter();
-            updateLastUpdated();
-
-        } catch(err) {
-            console.error(err);
-            showToast('Failed to load data: ' + err.message, 'error');
-        }
-
-        if (btn) { btn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh'; btn.disabled = false; }
-    }
-
-    // ── Stats ──
-    function updateStats() {
-        const total   = allRows.length;
-        const pending = allRows.filter(r => r.isPending).length;
-        const active  = total - pending;
-
-        setText('statTotal',   total);
-        setText('statPending', pending);
-        setText('statActive',  active);
-
-        // Top course
-        const courseCounts = {};
-        allRows.forEach(r => { courseCounts[r.course] = (courseCounts[r.course] || 0) + 1; });
-        const top = Object.entries(courseCounts).sort((a,b) => b[1]-a[1])[0];
-        setText('statTopCourse', top ? `${top[0].replace(/-/g,' ')} (${top[1]})` : '—');
-
-        // Pending badge in sidebar
-        const badge = document.getElementById('pendingCount');
-        if (badge) {
-            badge.textContent = pending;
-            badge.style.display = pending > 0 ? 'inline' : 'none';
-        }
-    }
-
-    // ── Filter ──
-    function setFilter(f, el) {
-        currentFilter = f;
-        document.querySelectorAll('.adm-filter-pill').forEach(p => p.classList.remove('active'));
-        if (el) el.classList.add('active');
-        applyFilter();
-    }
-
-    function applyFilter() {
-        const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
-        let rows = [...allRows];
-
-        // View filter
-        if (currentView === 'pending') rows = rows.filter(r => r.isPending);
-        if (currentView === 'active')  rows = rows.filter(r => !r.isPending);
-
-        // Pill filter
-        if (currentFilter === 'pending') rows = rows.filter(r => r.isPending && r.status !== 'rejected');
-        if (currentFilter === 'active')  rows = rows.filter(r => (r.status === 'active' || r.status === 'Verified') && !r.isPending);
-        if (currentFilter === 'rejected') rows = rows.filter(r => r.status === 'rejected');
-        
-        if (currentFilter !== 'all' && currentFilter !== 'pending' && currentFilter !== 'active' && currentFilter !== 'rejected') {
-            rows = rows.filter(r => r.course === currentFilter);
-        }
-
-        // Search
-        if (q) {
-            rows = rows.filter(r =>
-                r.fullName.toLowerCase().includes(q) ||
-                r.email.toLowerCase().includes(q) ||
-                r.whatsapp.includes(q) ||
-                r.city.toLowerCase().includes(q) ||
-                r.course.toLowerCase().includes(q)
-            );
-        }
-
-        // Sort
-        rows.sort((a,b) => {
-            let va = a[sortKey] ?? '';
-            let vb = b[sortKey] ?? '';
-            if (sortKey === 'ts') { va = a.tsObj || 0; vb = b.tsObj || 0; }
-            if (va < vb) return sortAsc ? -1 : 1;
-            if (va > vb) return sortAsc ? 1 : -1;
-            return 0;
+    if (document.getElementById('logoutBtn')) {
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            auth.signOut().then(() => window.location.href = 'admin-login.html');
         });
-
-        rows = rows.map((r,i) => ({ ...r, idx: i + 1 }));
-        filteredRows = rows;
-        renderTable(rows);
-    }
-
-    function filterTable() { applyFilter(); }
-
-    // ── Sort ──
-    function sortTable(key) {
-        if (sortKey === key) sortAsc = !sortAsc;
-        else { sortKey = key; sortAsc = true; }
-        document.querySelectorAll('th').forEach(th => th.classList.remove('sorted'));
-        applyFilter();
-    }
-
-    // ── Render Table ──
-    function renderTable(rows) {
-        const tbody = document.getElementById('studentsTableBody');
-        const count = document.getElementById('tableCount');
-
-        if (!rows.length) {
-            tbody.innerHTML = `<tr><td colspan="10"><div class="adm-empty"><i class="fas fa-inbox"></i><p>No records found.</p></div></td></tr>`;
-            if (count) count.textContent = '0 records';
-            return;
-        }
-
-        if (count) count.textContent = `${rows.length} record${rows.length !== 1 ? 's' : ''}`;
-
-        tbody.innerHTML = rows.map(r => `
-            <tr>
-                <td style="color:var(--text-muted); font-size:0.75rem;">${r.idx}</td>
-                <td class="td-name">${sanitize(r.fullName)}</td>
-                <td class="td-email">${sanitize(r.email)}</td>
-                <td>${sanitize(r.whatsapp)}</td>
-                <td style="max-width:140px; overflow:hidden; text-overflow:ellipsis;">${sanitize(r.course)}</td>
-                <td>${sanitize(r.city)}</td>
-                <td>${sanitize(r.paymentMethod)}</td>
-                <td>
-                    ${r.receiptUrl 
-                        ? `<a href="${r.receiptUrl}" target="_blank" class="adm-btn adm-btn-sm adm-btn-ghost" title="View Receipt" style="color:var(--amber); border-color:var(--amber-dim);">
-                             <i class="fas fa-receipt"></i>
-                           </a>` 
-                        : '<span style="opacity:0.2;">—</span>'
-                    }
-                </td>
-                <td>${statusBadge(r)}</td>
-                <td>${sanitize(r.ts)}</td>
-                <td>
-                    <div style="display:flex; gap:6px;">
-                        <button class="adm-btn adm-btn-sm adm-btn-ghost" onclick="openDetail('${r.id}')" title="View Details">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        ${r.isPending
-                            ? `<button class="adm-btn adm-btn-sm adm-btn-approve" onclick="updateStatus('${r.id}', 'active')" title="Approve"><i class="fas fa-check"></i></button>`
-                            : `<button class="adm-btn adm-btn-sm adm-btn-reject" onclick="updateStatus('${r.id}', 'rejected')" title="Reject"><i class="fas fa-times"></i></button>`
-                        }
-                        <button class="adm-btn adm-btn-sm adm-btn-reject" onclick="deleteEnrollment('${r.id}')" style="background:rgba(239,68,68,0.1); color:#f87171;" title="Delete Record">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
-    }
-
-    function statusBadge(r) {
-        if (r.isPending) return `<span class="s-badge pending">Pending</span>`;
-        if (r.status === 'active' || r.status === 'payment_confirmed') return `<span class="s-badge active">Active</span>`;
-        if (r.status === 'rejected') return `<span class="s-badge" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;">Rejected</span>`;
-        return `<span class="s-badge new">${sanitize(r.status)}</span>`;
-    }
-
-    // ── Update Status ──
-    async function updateStatus(docId, newStatus) {
-        try {
-            const data = {
-                status: newStatus,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
-
-            // AUTO-GENERATE ROLL NUMBER ON APPROVAL
-            if (newStatus === 'active') {
-                const doc = await db.collection('enrollments').doc(docId).get();
-                if (doc.exists && !doc.data().rollNumber) {
-                    // Simple roll number: ZCP-2026- (last 4 digits of ID or random)
-                    const rand = Math.floor(1000 + Math.random() * 9000);
-                    data.rollNumber = `ZCP-2026-${rand}`;
-                }
-            }
-
-            await db.collection('enrollments').doc(docId).update(data);
-            showToast(`Status updated to "${newStatus}"`, 'success');
-            await loadData();
-            closeModal();
-        } catch(err) {
-            showToast('Error: ' + err.message, 'error');
-        }
-    }
-
-    // ── Delete Enrollment ──
-    async function deleteEnrollment(docId) {
-        if (!confirm('Are you sure you want to PERMANENTLY DELETE this enrollment? This action cannot be undone.')) return;
-        
-        try {
-            await db.collection('enrollments').doc(docId).delete();
-            showToast('Record deleted successfully', 'success');
-            await loadData();
-            closeModal();
-        } catch(err) {
-            showToast('Error: ' + err.message, 'error');
-        }
     }
 
     // ── Detail Modal ──
-    function openDetail(id) {
-        const r = allRows.find(x => x.id === id);
+    window.openDetail = function(id) {
+        const r = window.enrollmentsData.find(x => x.id === id);
         if (!r) return;
 
+        const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
         setText('modalName', r.fullName);
-
+        
         const modalStatus = document.getElementById('modalStatus');
-        if (modalStatus) modalStatus.innerHTML = statusBadge(r);
+        if (modalStatus) {
+            modalStatus.innerHTML = `<span class="s-badge ${r.isPending ? 'pending' : (r.status==='rejected' ? 'rejected' : 'active')}">${r.status.toUpperCase()}</span>`;
+        }
 
         const fields = [
-            { label: 'Email',        value: r.email,         full: false },
-            { label: 'WhatsApp',     value: r.whatsapp,      full: false },
-            { label: 'Course',       value: r.course,        full: false },
-            { label: 'City',         value: r.city,          full: false },
-            { label: 'Occupation',   value: r.occupation,    full: false },
-            { label: 'Department',   value: r.department,    full: false },
-            { label: 'Payment Via',  value: r.paymentMethod, full: false },
-            { label: 'Receipt',      value: r.receiptUrl ? `<a href="${r.receiptUrl}" target="_blank" style="color:var(--amber); font-weight:700;">View Payment Receipt <i class="fas fa-external-link-alt"></i></a>` : 'No receipt uploaded', full: false },
-            { label: 'Enrollment Date', value: r.ts,         full: false },
-            { label: 'Referral',     value: r.referral,      full: true  },
-            { label: 'Doc ID',       value: r.id,            full: true  }
+            { label: 'Email',        value: r.email },
+            { label: 'WhatsApp',     value: r.whatsapp },
+            { label: 'Course',       value: r.course },
+            { label: 'City',         value: r.city },
+            { label: 'Occupation',   value: r.occupation },
+            { label: 'Department',   value: r.department },
+            { label: 'Payment Via',  value: r.paymentMethod },
+            { label: 'Enrollment Date', value: r.ts },
+            { label: 'Referral',     value: r.referral },
+            { label: 'Doc ID',       value: r.id }
         ];
 
         const grid = document.getElementById('modalGrid');
         if (grid) {
-            grid.innerHTML = fields.map(f => {
-                // Determine if we should sanitize or keep HTML (for links)
-                const displayValue = (f.label === 'Receipt') ? f.value : sanitize(f.value);
-                return `
-                    <div class="adm-detail-field${f.full ? ' full' : ''}">
-                        <div class="adm-detail-label">${f.label}</div>
-                        <div class="adm-detail-value">${displayValue}</div>
-                    </div>
-                `;
-            }).join('');
+            grid.innerHTML = fields.map(f => `
+                <div class="adm-detail-field">
+                    <div class="adm-detail-label">${f.label}</div>
+                    <div class="adm-detail-value">${window.sanitize(f.value)}</div>
+                </div>
+            `).join('');
 
-            // Add Large Receipt Preview if exists
             if (r.receiptUrl) {
                 grid.innerHTML += `
                     <div class="adm-detail-field full" style="margin-top:2rem;">
-                        <div class="adm-detail-label">Proof of Payment (Screenshot)</div>
-                        <div style="margin-top:1rem; border:1px solid var(--border); border-radius:12px; overflow:hidden; background:rgba(0,0,0,0.2);">
-                            <img src="${r.receiptUrl}" alt="Payment Receipt" style="width:100%; height:auto; display:block; cursor:zoom-in;" onclick="window.open(this.src)">
+                        <div class="adm-detail-label">Proof of Payment</div>
+                        <div style="margin-top:1rem; border:1px solid var(--border); border-radius:12px; overflow:hidden;">
+                            <img src="${r.receiptUrl}" style="width:100%; height:auto; cursor:zoom-in;" onclick="window.open(this.src)">
                         </div>
-                        <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.5rem; text-align:center;">Click image to view full size</p>
                     </div>
                 `;
             }
         }
 
-        const actions = document.getElementById('modalActions');
-        if (actions) {
-            let html = `
+        const modalActions = document.getElementById('modalActions');
+        if (modalActions) {
+            modalActions.innerHTML = `
                 <div style="display:flex; gap:1rem; width:100%; flex-wrap:wrap;">
-                    <div style="display:flex; gap:0.5rem; flex:1; min-width:200px;">
-                        ${r.isPending
-                            ? `<button class="adm-btn adm-btn-primary" onclick="updateStatus('${r.id}','active')" style="flex:1;"><i class="fas fa-check"></i> Approve</button>
-                               <button class="adm-btn adm-btn-reject" onclick="updateStatus('${r.id}','rejected')"><i class="fas fa-times"></i> Reject</button>`
-                            : `<button class="adm-btn adm-btn-ghost" onclick="updateStatus('${r.id}','pending_verification')"><i class="fas fa-undo"></i> Set to Pending</button>`
-                        }
-                        <button class="adm-btn adm-btn-reject" onclick="deleteEnrollment('${r.id}')" style="background:rgba(239,68,68,0.1); color:#f87171;" title="Delete Record">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-
-                    ${!r.isPending && r.status === 'active' ? `
-                        <button class="adm-btn adm-btn-primary" style="background:#d4af37; color:black;" onclick="openIDCardFromAdmin('${r.id}')">
-                            <i class="fas fa-id-card"></i> Student Card
-                        </button>
-                    ` : ''}
+                    ${r.isPending
+                        ? `<button class="adm-btn adm-btn-primary" onclick="updateStatus('${r.id}','active')" style="flex:1;"><i class="fas fa-check"></i> Approve</button>
+                           <button class="adm-btn adm-btn-reject" onclick="updateStatus('${r.id}','rejected')"><i class="fas fa-times"></i> Reject</button>`
+                        : `<button class="adm-btn adm-btn-ghost" onclick="updateStatus('${r.id}','pending_verification')"><i class="fas fa-undo"></i> Set to Pending</button>`
+                    }
+                    <button class="adm-btn adm-btn-reject" onclick="window.handleSingleDelete('${r.id}')" style="background:rgba(239,68,68,0.1); color:#f87171;">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </div>
             `;
-            actions.innerHTML = html;
         }
 
         document.getElementById('detailModal').classList.add('active');
-    }
+    };
 
-    // Attach to window safely
-    window.updateStatus = updateStatus;
-    window.openDetail = openDetail;
-    window.deleteEnrollment = deleteEnrollment;
+    window.closeModal = () => document.getElementById('detailModal').classList.remove('active');
 
-    // ── Admin ID Card Logic ──
-    window.openIDCardFromAdmin = function(enrollmentId) {
-        const r = allRows.find(x => x.id === enrollmentId);
-        if (!r) return;
-
-        const modal = document.getElementById('idCardModal');
-        const cardName = document.getElementById('cardName');
-        const cardRoll = document.getElementById('cardRoll');
-        
-        if (cardName) cardName.textContent = r.fullName;
-        if (cardRoll) cardRoll.textContent = r.rollNumber || 'ZCP-2026-PENDING';
-
-        if (modal) modal.classList.add('active');
-    }
-
-    window.closeIDCard = function() {
-        const modal = document.getElementById('idCardModal');
-        if (modal) modal.classList.remove('active');
-    }
-
-    window.downloadIDCard = function() {
-        const card = document.getElementById('zcpIDCard');
-        if (!card) return;
-
-        html2canvas(card, {
-            scale: 3, 
-            backgroundColor: null,
-            useCORS: true
-        }).then(canvas => {
-            const link = document.createElement('a');
-            link.download = `ZCP_ID_${document.getElementById('cardName').textContent.replace(/\s+/g, '_')}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        });
-    }
-
-    function closeModal() {
-        document.getElementById('detailModal').classList.remove('active');
-    }
-    document.getElementById('detailModal').addEventListener('click', e => {
-        if (e.target === e.currentTarget) closeModal();
-    });
+    window.handleSingleDelete = async (id) => {
+        if (!confirm('Permanently delete this record?')) return;
+        try {
+            await db.collection('enrollments').doc(id).delete();
+            window.showToast('Record deleted', 'success');
+            window.loadAdminData();
+            window.closeModal();
+        } catch(err) { window.showToast('Error: ' + err.message, 'error'); }
+    };
 
     // ── Switch View (sidebar) ──
-    function switchView(view, el) {
-        currentView = view;
+    window.switchView = (view, el) => {
+        window.currentAdminView = view;
         document.querySelectorAll('.adm-nav-item').forEach(i => i.classList.remove('active'));
         if (el) el.classList.add('active');
 
-        // Toggle sections
-        const isCourseView   = view === 'courses';
         const studentTable   = document.querySelector('.adm-table-section'); 
         const courseSection  = document.getElementById('courseManagementSection');
         const statsSection   = document.querySelector('.adm-stats');
-        const searchBox     = document.querySelector('.adm-search');
 
-        // Buttons
-        const refreshBtn     = document.getElementById('refreshBtn');
-        const exportBtn      = document.getElementById('exportBtn');
-        const launchBatchBtn = document.getElementById('launchBatchBtn');
+        const isCourseView = view === 'courses';
+        if (studentTable)  studentTable.style.display = isCourseView ? 'none' : 'block';
+        if (statsSection)  statsSection.style.display = isCourseView ? 'none' : 'grid';
+        if (courseSection) courseSection.style.display = isCourseView ? 'block' : 'none';
 
-        if (isCourseView) {
-            // Show Courses
-            if (studentTable)   studentTable.style.display = 'none';
-            if (statsSection)   statsSection.style.display = 'none';
-            if (courseSection)  courseSection.style.display = 'block';
-            
-            // Toggle Buttons
-            if (refreshBtn)     refreshBtn.style.display = 'none';
-            if (exportBtn)      exportBtn.style.display = 'none';
-            if (launchBatchBtn) launchBatchBtn.style.display = 'flex';
+        document.getElementById('refreshBtn').style.display = isCourseView ? 'none' : 'flex';
+        document.getElementById('exportBtn').style.display = isCourseView ? 'none' : 'flex';
+        document.getElementById('launchBatchBtn').style.display = isCourseView ? 'flex' : 'none';
 
-            setText('viewTitle', 'Course Management');
-        } else {
-            // Show Students
-            if (studentTable)   studentTable.style.display = 'block';
-            if (statsSection)   statsSection.style.display = 'grid';
-            if (courseSection)  courseSection.style.display = 'none';
+        const titles = { students: 'All Enrollments', pending: 'Pending Verification', active: 'Active Students', courses: 'Course Management' };
+        const titleEl = document.getElementById('viewTitle');
+        if (titleEl) titleEl.textContent = titles[view] || 'Students';
 
-            // Toggle Buttons
-            if (refreshBtn)     refreshBtn.style.display = 'flex';
-            if (exportBtn)      exportBtn.style.display = 'flex';
-            if (launchBatchBtn) launchBatchBtn.style.display = 'none';
-
-            const titles = { students: 'All Enrollments', pending: 'Pending Verification', active: 'Active Students' };
-            setText('viewTitle',  titles[view] || 'Students');
-            applyFilter();
-        }
-    }
-
-    // ── Course Management Logic ──
-    async function loadCourses() {
-        try {
-            const snap = await db.collection('courses').orderBy('createdAt', 'desc').get();
-            allCourses = [];
-            snap.forEach(doc => allCourses.push({ id: doc.id, ...doc.data() }));
-            renderCoursesTable();
-        } catch(err) {
-            console.error(err);
-        }
-    }
-
-    function renderCoursesTable() {
-        const grid = document.getElementById('coursesCardsGrid');
-        if (!grid) return;
-
-        if (!allCourses.length) {
-            grid.innerHTML = `
-                <div style="grid-column:1/-1; text-align:center; padding:4rem; opacity:0.5;">
-                    <i class="fas fa-rocket" style="font-size:2.5rem; color:var(--amber); margin-bottom:1rem; display:block;"></i>
-                    <p style="font-size:1.1rem; font-weight:600;">No batches yet.</p>
-                    <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Click "Launch New Batch" to publish your first course.</p>
-                </div>`;
-            return;
-        }
-
-        const statusColor = { live: '#4ade80', draft: 'var(--amber)', closed: '#f87171' };
-        const statusIcon  = { live: 'fa-broadcast-tower', draft: 'fa-eye-slash', closed: 'fa-lock' };
-        const statusLabel = { live: 'Live', draft: 'Draft', closed: 'Closed' };
-
-        grid.innerHTML = allCourses.map(c => `
-            <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:18px; overflow:hidden; transition:border-color 0.2s, transform 0.2s;"
-                 onmouseover="this.style.borderColor='var(--border-amber)'; this.style.transform='translateY(-3px)';"
-                 onmouseout="this.style.borderColor='var(--border)'; this.style.transform='translateY(0)';">
-
-                <!-- Banner -->
-                <div style="height:160px; background:var(--bg-surface); position:relative; overflow:hidden;">
-                    ${c.imageUrl ? `<img src="${sanitize(c.imageUrl)}" alt="${sanitize(c.title)}" style="width:100%; height:100%; object-fit:cover; opacity:0.85;">` : `<div style="display:flex; align-items:center; justify-content:center; height:100%; color:var(--text-muted);"><i class="fas fa-image fa-2x"></i></div>`}
-                    <div style="position:absolute; top:12px; right:12px; display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.7); border:1px solid ${statusColor[c.status] || 'var(--border)'}; color:${statusColor[c.status] || 'white'}; padding:4px 10px; border-radius:100px; font-size:0.72rem; font-weight:700; backdrop-filter:blur(8px);">
-                        <i class="fas ${statusIcon[c.status] || 'fa-circle'}"></i> ${statusLabel[c.status] || c.status}
-                    </div>
-                </div>
-
-                <!-- Body -->
-                <div style="padding:1.25rem 1.5rem;">
-                    <div style="font-size:1.1rem; font-weight:700; color:var(--text-primary); margin-bottom:0.5rem; line-height:1.3;">${sanitize(c.title)}</div>
-                    <div style="font-size:0.82rem; color:var(--text-muted); line-height:1.5; margin-bottom:1rem;">${sanitize(c.eligibility || c.description || '—')}</div>
-
-                    <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1rem;">
-                        <div style="display:flex; align-items:center; gap:6px; font-size:0.78rem; color:var(--text-secondary);">
-                            <i class="fas fa-calendar-alt" style="color:var(--amber);"></i> ${sanitize(c.startTime || '—')}
-                        </div>
-                        <div style="display:flex; align-items:center; gap:6px; font-size:0.78rem; color:var(--text-secondary);">
-                            <i class="fas fa-clock" style="color:var(--amber);"></i> ${sanitize(c.timing || '—')}
-                        </div>
-                    </div>
-
-                    <div style="display:flex; align-items:center; justify-content:space-between; padding-top:1rem; border-top:1px solid var(--border);">
-                        <div>
-                            <span style="font-size:1.2rem; font-weight:700; color:var(--amber);">Rs ${sanitize(c.price || '—')}</span>
-                            ${c.priceOld ? `<span style="font-size:0.8rem; color:var(--text-muted); text-decoration:line-through; margin-left:6px;">Rs ${sanitize(c.priceOld)}</span>` : ''}
-                        </div>
-                        <div style="display:flex; gap:6px;">
-                            <button class="adm-btn adm-btn-sm adm-btn-ghost" onclick="editCourse('${c.id}')" title="Edit">
-                                <i class="fas fa-edit"></i> Edit
-                            </button>
-                            <button class="adm-btn adm-btn-sm adm-btn-primary" onclick="openContentModal('${c.id}')" title="Manage Classroom Content">
-                                <i class="fas fa-folder-open"></i> Manage Content
-                            </button>
-                            <button class="adm-btn adm-btn-sm adm-btn-reject" onclick="deleteCourse('${c.id}')" title="Delete">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    function updateImagePreview(url) {
-        const img = document.getElementById('cImagePreview');
-        const placeholder = document.getElementById('cImagePlaceholder');
-        if (url && url.startsWith('http')) {
-            img.src = url;
-            img.style.display = 'block';
-            if (placeholder) placeholder.style.display = 'none';
-        } else {
-            img.style.display = 'none';
-            if (placeholder) placeholder.style.display = 'flex';
-        }
-    }
-
-    function openCourseModal() {
-        document.getElementById('courseModalTitle').textContent = 'Launch New Batch';
-        document.getElementById('courseSubmitText').textContent = 'Launch Batch';
-        document.getElementById('courseEditId').value = '';
-        document.getElementById('courseForm').reset();
-        document.getElementById('cImageFile').value = '';
-        document.getElementById('cImage').value = '';
-        document.getElementById('cZoomLink').value = '';
-        document.getElementById('uploadProgressContainer').style.display = 'none';
-        document.getElementById('cStatusLive').checked = true;
-        updateImagePreview('');
-        document.getElementById('courseModal').classList.add('active');
-    }
-
-    function closeCourseModal() {
-        document.getElementById('courseModal').classList.remove('active');
-    }
-
-    // ── Batch Content Logic ──
-    let currentBatchContent = [];
-
-    async function openContentModal(courseId) {
-        const c = allCourses.find(x => x.id === courseId);
-        if (!c) return;
-
-        document.getElementById('contentModalCourseTitle').textContent = `Manage: ${c.title}`;
-        document.getElementById('currentContentCourseId').value = courseId;
-        document.getElementById('contentForm').reset();
-        
-        await loadBatchContent(courseId);
-        document.getElementById('batchContentModal').classList.add('active');
-    }
-
-    function closeContentModal() {
-        document.getElementById('batchContentModal').classList.remove('active');
-    }
-
-    async function loadBatchContent(courseId) {
-        const list = document.getElementById('contentList');
-        list.innerHTML = '<div style="text-align:center; padding:2rem; opacity:0.5;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
-
-        try {
-            const snap = await db.collection('courses').doc(courseId).collection('content').orderBy('createdAt', 'desc').get();
-            currentBatchContent = [];
-            snap.forEach(doc => currentBatchContent.push({ id: doc.id, ...doc.data() }));
-            renderContentList(courseId);
-        } catch(err) {
-            list.innerHTML = `<div style="color:#f87171; text-align:center; padding:1rem;">Error: ${err.message}</div>`;
-        }
-    }
-
-    function renderContentList(courseId) {
-        const list = document.getElementById('contentList');
-        if (!currentBatchContent.length) {
-            list.innerHTML = `
-                <div style="text-align:center; padding:3rem; opacity:0.5;">
-                    <i class="fas fa-inbox fa-2x"></i>
-                    <p style="font-size:0.85rem; margin-top:10px;">No materials posted yet.</p>
-                </div>`;
-            return;
-        }
-
-        const icons = { link: 'fa-link', lecture: 'fa-video', zoom: 'fa-broadcast-tower', pdf: 'fa-file-pdf' };
-
-        list.innerHTML = currentBatchContent.map(i => `
-            <div class="adm-content-item">
-                <div class="adm-content-icon">
-                    <i class="fas ${icons[i.type] || 'fa-file'}"></i>
-                </div>
-                <div class="adm-content-info">
-                    <div class="adm-content-title">${sanitize(i.title)}</div>
-                    <div class="adm-content-meta">${sanitize(i.url)}</div>
-                </div>
-                <button class="adm-content-delete" onclick="deleteContent('${courseId}', '${i.id}')" title="Remove Material">
-                    <i class="fas fa-trash-alt"></i>
-                </button>
-            </div>
-        `).join('');
-    }
-
-    function toggleContentLink(isUpload) {
-        document.getElementById('contentUrlWrap').style.display = isUpload ? 'none' : 'block';
-        document.getElementById('contentFileWrap').style.display = isUpload ? 'block' : 'none';
-        
-        // Adjust "required" attributes
-        document.getElementById('contentUrl').required = !isUpload;
-        document.getElementById('contentFile').required = isUpload;
-    }
-
-    async function uploadBatchMaterial(courseId, file) {
-        if (!file) return null;
-        const progressContainer = document.getElementById('contentUploadProgress');
-        const progressBar = document.getElementById('contentProgressBar');
-        const statusText = document.getElementById('contentStatusText');
-        
-        progressContainer.style.display = 'block';
-        const storageRef = firebase.storage().ref(`course_materials/${courseId}/${Date.now()}_${file.name}`);
-        const uploadTask = storageRef.put(file);
-
-        return new Promise((resolve, reject) => {
-            uploadTask.on('state_changed', 
-                (snap) => {
-                    const progress = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
-                    progressBar.style.width = progress + '%';
-                    statusText.textContent = `Uploading ${file.name}... ${progress}%`;
-                },
-                (err) => reject(err),
-                async () => {
-                    const url = await uploadTask.snapshot.ref.getDownloadURL();
-                    progressBar.style.width = '100%';
-                    statusText.textContent = 'Uploaded!';
-                    setTimeout(() => progressContainer.style.display = 'none', 1000);
-                    resolve(url);
-                }
-            );
-        });
-    }
-
-    async function handleContentSubmit(e) {
-        e.preventDefault();
-        const courseId = document.getElementById('currentContentCourseId').value;
-        const btn = e.target.querySelector('button');
-        
-        const isUpload = document.getElementById('contentIsUpload').checked;
-        const fileInput = document.getElementById('contentFile');
-        let fileUrl = document.getElementById('contentUrl').value.trim();
-
-        btn.disabled = true;
-        const oldText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing...';
-
-        try {
-            if (isUpload && fileInput.files.length > 0) {
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
-                fileUrl = await uploadBatchMaterial(courseId, fileInput.files[0]);
-            }
-
-            if (!fileUrl) {
-                showToast('Please provide a URL or upload a file.', 'error');
-                btn.disabled = false;
-                btn.innerHTML = oldText;
-                return;
-            }
-
-            const data = {
-                type:        document.getElementById('contentType').value,
-                title:       document.getElementById('contentTitle').value.trim(),
-                url:         fileUrl,
-                description: document.getElementById('contentDesc').value.trim(),
-                createdAt:   firebase.firestore.FieldValue.serverTimestamp()
-            };
-
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Posting...';
-            await db.collection('courses').doc(courseId).collection('content').add(data);
-            
-            showToast('✅ Material posted to classroom!', 'success');
-            document.getElementById('contentForm').reset();
-            if (!isUpload) toggleContentLink(false); // Reset UI if needed
-            loadBatchContent(courseId);
-        } catch(err) {
-            console.error(err);
-            showToast('Error: ' + err.message, 'error');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = oldText;
-        }
-    }
-
-    async function deleteContent(courseId, contentId) {
-        if (!confirm('Are you sure you want to remove this material?')) return;
-        try {
-            await db.collection('courses').doc(courseId).collection('content').doc(contentId).delete();
-            showToast('❌ Material removed.', 'success');
-            loadBatchContent(courseId);
-        } catch(err) {
-            showToast('Error: ' + err.message, 'error');
-        }
-    }
-
-    async function handleCourseSubmit(e) {
-        e.preventDefault();
-        const id = document.getElementById('courseEditId').value;
-        const statusVal = document.querySelector('input[name="cStatus"]:checked')?.value || 'live';
-        const btn = document.getElementById('courseSubmitBtn');
-        const btnText = document.getElementById('courseSubmitText');
-
-        const data = {
-            title:       document.getElementById('cTitle').value.trim(),
-            imageUrl:    document.getElementById('cImage').value.trim(),
-            startTime:   document.getElementById('cStart').value.trim(),
-            timing:      document.getElementById('cTiming').value.trim(),
-            eligibility: document.getElementById('cEligibility').value.trim(),
-            description: document.getElementById('cDesc').value.trim(),
-            price:       document.getElementById('cPrice').value.trim(),
-            priceOld:    document.getElementById('cPriceOld').value.trim(),
-            status:      statusVal,
-            updatedAt:   firebase.firestore.FieldValue.serverTimestamp()
-        };
-        if (!id) data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-
-        btn.disabled = true;
-        btnText.textContent = 'Saving...';
-
-        try {
-            if (id) {
-                await db.collection('courses').doc(id).update(data);
-                showToast('✅ Batch updated! Site reflects changes in seconds.', 'success');
-            } else {
-                await db.collection('courses').add(data);
-                showToast('🚀 New batch is now live on the website!', 'success');
-            }
-            closeCourseModal();
-            loadCourses();
-        } catch(err) {
-            showToast('Error: ' + err.message, 'error');
-        } finally {
-            btn.disabled = false;
-            btnText.textContent = id ? 'Save Changes' : 'Launch Batch';
-        }
-    }
-
-    function editCourse(id) {
-        const c = allCourses.find(x => x.id === id);
-        if (!c) return;
-
-        document.getElementById('courseModalTitle').textContent = 'Edit Batch';
-        document.getElementById('courseSubmitText').textContent = 'Save Changes';
-        document.getElementById('courseEditId').value = c.id;
-        document.getElementById('cTitle').value = c.title || '';
-        document.getElementById('cImage').value = c.imageUrl || '';
-        document.getElementById('cZoomLink').value = c.zoomLink || '';
-        document.getElementById('cStart').value = c.startTime || '';
-        document.getElementById('cTiming').value = c.timing || '';
-        document.getElementById('cEligibility').value = c.eligibility || '';
-        document.getElementById('cDesc').value = c.description || '';
-        document.getElementById('cPrice').value = c.price || '';
-        document.getElementById('cPriceOld').value = c.priceOld || '';
-
-        // Set status radio
-        const radioId = { live: 'cStatusLive', draft: 'cStatusDraft', closed: 'cStatusClosed' }[c.status] || 'cStatusLive';
-        document.getElementById(radioId).checked = true;
-
-        updateImagePreview(c.imageUrl || '');
-        document.getElementById('courseModal').classList.add('active');
-    }
-
-    async function deleteCourse(id) {
-        if (!confirm('Are you sure you want to delete this course? This will not affect existing enrollments.')) return;
-        try {
-            await db.collection('courses').doc(id).delete();
-            showToast('Course deleted', 'success');
-            loadCourses();
-        } catch(err) {
-            showToast('Error: ' + err.message, 'error');
-        }
-    }
-
-    // ── CSV Export ──
-    function exportCSV() {
-        const rows = filteredRows.length ? filteredRows : allRows;
-        if (!rows.length) { showToast('No data to export.', 'error'); return; }
-
-        const headers = ['#','Name','Email','WhatsApp','Course','City','Occupation','Department','Payment','Status','Date'];
-        const csv = [headers.join(',')];
-
-        rows.forEach((r,i) => {
-            const vals = [
-                i + 1, r.fullName, r.email, r.whatsapp, r.course,
-                r.city, r.occupation, r.department, r.paymentMethod, r.status, r.ts
-            ].map(v => `"${String(v ?? '').replace(/"/g, '""')}"`);
-            csv.push(vals.join(','));
-        });
-
-        const blob = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
-        const url  = URL.createObjectURL(blob);
-        const a    = document.createElement('a');
-        a.href     = url;
-        a.download = `ZCP_Students_${new Date().toLocaleDateString('en-PK').replace(/\//g,'-')}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        showToast(`Exported ${rows.length} records`, 'success');
-    }
-
-    // ── Toast ──
-    function showToast(msg, type = 'success') {
-        const toast = document.getElementById('toast');
-        const msgEl = document.getElementById('toastMsg');
-        toast.className = `adm-toast ${type}`;
-        toast.querySelector('i').className = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
-        if (msgEl) msgEl.textContent = msg;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 3500);
-    }
-
-    function updateLastUpdated() {
-        const el = document.getElementById('lastUpdated');
-        if (el) el.textContent = 'Updated ' + new Date().toLocaleTimeString('en-PK', { hour:'2-digit', minute:'2-digit' });
-    }
+        if (!isCourseView) window.applyAdminFilter();
+    };
 
     // ── Helpers ──
-    function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
-    function sanitize(str) {
-        return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
+    window.sanitize = (str) => String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    window.updateLastUpdated = () => {
+        const el = document.getElementById('lastUpdated');
+        if (el) el.textContent = 'Updated ' + new Date().toLocaleTimeString('en-PK', { hour:'2-digit', minute:'2-digit' });
+    };
     </script>
     <script>
-        // --- DESKTOP SIDEBAR COLLAPSE ---
+        // --- Sidebar Persistence (UI) ---
         window.toggleSidebar = function() {
             const bodySB = document.getElementById('admSidebar');
-            const bodyMain = document.querySelector('.adm-main');
             bodySB.classList.toggle('collapsed');
-            bodyMain.classList.toggle('expanded');
+            document.querySelector('.adm-main').classList.toggle('expanded');
             localStorage.setItem('adm_sb_collapsed', bodySB.classList.contains('collapsed'));
         };
 

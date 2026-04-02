@@ -1210,66 +1210,253 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ============================================================
-    //  BULK ACTIONS & EXCEL EXPORT (admin.html)
+    //  UNIFIED ADMIN CONSOLE LOGIC (admin.html)
+    //  Restoring data visibility and reconcilling logic (v4)
     // ============================================================
     
-    // 1. Professional Excel Export
-    window.exportToXL = () => {
-        if (!enrollmentsData || enrollmentsData.length === 0) {
-            showToast('No data to export', 'error');
+    window.enrollmentsData = [];
+    window.allCourses      = [];
+    window.currentAdminFilter = 'all';
+    window.currentAdminView   = 'students';
+    window.sortKey = 'ts';
+    window.sortAsc = false;
+
+    // 1. Fetch Students from Firestore
+    window.loadAdminData = async () => {
+        const btn = document.getElementById('refreshBtn');
+        if (btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...'; btn.disabled = true; }
+
+        try {
+            const snap = await db.collection('enrollments').orderBy('submittedAt', 'desc').get();
+            window.enrollmentsData = [];
+
+            snap.forEach((doc) => {
+                const d = doc.data();
+                const ts = d.submittedAt?.toDate?.() || d.confirmedAt?.toDate?.() || null;
+                const isPending = ['form_submitted','pending_verification','payment_confirmed']
+                                   .includes(d.status) || d.paymentStatus === 'pending_verification';
+
+                window.enrollmentsData.push({
+                    id:            doc.id,
+                    fullName:      d.fullName      || '—',
+                    email:         d.email         || '—',
+                    whatsapp:      d.whatsapp || d.phone || '—',
+                    course:        d.course        || '—',
+                    courseName:    d.course,
+                    city:          d.city          || '—',
+                    occupation:    d.occupation    || '—',
+                    department:    d.department    || '—',
+                    referral:      d.referral      || '—',
+                    paymentMethod: d.paymentMethod || '—',
+                    receiptUrl:    d.receiptUrl    || null,
+                    status:        d.status        || 'form_submitted',
+                    paymentStatus: d.paymentStatus || '—',
+                    isPending,
+                    tsObj:         ts,
+                    ts:            ts ? ts.toLocaleDateString('en-PK') : '—'
+                });
+            });
+
+            updateAdminStats();
+            applyAdminFilter();
+            if (window.updateLastUpdated) window.updateLastUpdated();
+
+        } catch(err) {
+            console.error('Error loading Admin data:', err);
+            if (window.showToast) window.showToast('Failed to load students: ' + err.message, 'error');
+        } finally {
+            if (btn) { btn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh'; btn.disabled = false; }
+        }
+    };
+
+    // 2. Statistics Overview
+    function updateAdminStats() {
+        const total   = window.enrollmentsData.length;
+        const pending = window.enrollmentsData.filter(r => r.isPending).length;
+        const active  = total - pending;
+
+        if (document.getElementById('statTotal'))   document.getElementById('statTotal').textContent = total;
+        if (document.getElementById('statPending')) document.getElementById('statPending').textContent = pending;
+        if (document.getElementById('statActive'))  document.getElementById('statActive').textContent = active;
+
+        // Pending badge in sidebar
+        const badge = document.getElementById('pendingCount');
+        if (badge) {
+            badge.textContent = pending;
+            badge.style.display = pending > 0 ? 'inline' : 'none';
+        }
+
+        // Top Course calc
+        const courseCounts = {};
+        window.enrollmentsData.forEach(r => { 
+            const course = r.course || 'Unknown';
+            courseCounts[course] = (courseCounts[course] || 0) + 1; 
+        });
+        const top = Object.entries(courseCounts).sort((a,b) => b[1]-a[1])[0];
+        if (document.getElementById('statTopCourse')) {
+            document.getElementById('statTopCourse').textContent = top ? `${top[0].replace(/-/g,' ')} (${top[1]})` : '—';
+        }
+    }
+
+    // 3. Filtering & Searching Logic
+    window.applyAdminFilter = () => {
+        const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
+        let rows = [...window.enrollmentsData];
+
+        // Status view filter (sidebar views)
+        if (window.currentAdminView === 'pending') rows = rows.filter(r => r.isPending);
+        if (window.currentAdminView === 'active')  rows = rows.filter(r => !r.isPending);
+
+        // Pill filter
+        const f = window.currentAdminFilter;
+        if (f === 'pending')  rows = rows.filter(r => r.isPending && r.status !== 'rejected');
+        if (f === 'active')   rows = rows.filter(r => r.status === 'active' || r.status === 'Verified');
+        if (f === 'rejected') rows = rows.filter(r => r.status === 'rejected');
+        
+        // Course specific from pill? (Check if not base statuses)
+        if (!['all','pending','active','rejected'].includes(f)) {
+            rows = rows.filter(r => r.course === f);
+        }
+
+        // Search text
+        if (q) {
+            rows = rows.filter(r =>
+                r.fullName.toLowerCase().includes(q) ||
+                r.email.toLowerCase().includes(q) ||
+                r.whatsapp.includes(q) ||
+                r.city.toLowerCase().includes(q) ||
+                r.course.toLowerCase().includes(q)
+            );
+        }
+
+        // Sorting
+        rows.sort((a,b) => {
+            let va = a[window.sortKey] ?? '';
+            let vb = b[window.sortKey] ?? '';
+            if (window.sortKey === 'ts') { va = a.tsObj || 0; vb = b.tsObj || 0; }
+            if (va < vb) return window.sortAsc ? -1 : 1;
+            if (va > vb) return window.sortAsc ? 1 : -1;
+            return 0;
+        });
+
+        renderAdminTable(rows);
+    };
+
+    window.filterAdminTable = () => applyAdminFilter();
+
+    window.setAdminFilter = (f, el) => {
+        window.currentAdminFilter = f;
+        document.querySelectorAll('.adm-filter-pill').forEach(p => p.classList.remove('active'));
+        if (el) el.classList.add('active');
+        applyAdminFilter();
+    };
+
+    window.sortTable = (key) => {
+        if (window.sortKey === key) window.sortAsc = !window.sortAsc;
+        else { window.sortKey = key; window.sortAsc = true; }
+        document.querySelectorAll('th').forEach(th => th.classList.remove('sorted'));
+        applyAdminFilter();
+    };
+
+    // 4. Rendering the Students Table
+    function renderAdminTable(rows) {
+        const tbody = document.getElementById('studentsTableBody');
+        const count = document.getElementById('tableCount');
+        if (!tbody) return;
+
+        if (count) count.textContent = `${rows.length} record${rows.length !== 1 ? 's' : ''}`;
+
+        if (!rows.length) {
+            tbody.innerHTML = `<tr><td colspan="11"><div style="text-align:center; padding:3rem; opacity:0.3;"><i class="fas fa-inbox fa-2x"></i><p style="margin-top:1rem;">No records found matching your filters.</p></div></td></tr>`;
             return;
         }
 
-        // Filter currently visible data
-        const filtered = enrollmentsData.filter(item => {
-            if (currentAdminFilter === 'all') return true;
-            if (currentAdminFilter === 'pending') return item.status === 'form_submitted' || item.status === 'payment_confirmed';
-            if (currentAdminFilter === 'active') return item.status === 'active';
-            if (currentAdminFilter === 'rejected') return item.status === 'rejected';
-            if (currentAdminFilter === 'content-creation') return (item.courseName || '').toLowerCase().includes('content creation');
-            if (currentAdminFilter === 'web-app') return (item.courseName || '').toLowerCase().includes('web');
-            return true;
-        });
+        tbody.innerHTML = rows.map((r, i) => `
+            <tr>
+                <td style="color:var(--text-muted); font-size:0.75rem;">${i + 1}</td>
+                <td class="td-name">${r.fullName}</td>
+                <td class="td-email">${r.email}</td>
+                <td>${r.whatsapp}</td>
+                <td style="max-width:140px; overflow:hidden; text-overflow:ellipsis;">${r.course}</td>
+                <td>${r.city}</td>
+                <td>${r.paymentMethod}</td>
+                <td>
+                    ${r.receiptUrl 
+                        ? `<a href="${r.receiptUrl}" target="_blank" class="adm-btn adm-btn-sm adm-btn-ghost" title="View Receipt" style="color:var(--amber); border-color:var(--amber-dim);">
+                             <i class="fas fa-receipt"></i>
+                           </a>` 
+                        : '<span style="opacity:0.2;">—</span>'
+                    }
+                </td>
+                <td>
+                    <span class="s-badge ${r.isPending ? 'pending' : (r.status === 'rejected' ? 'rejected' : 'active')}">
+                        ${r.status.replace(/_/g,' ').toUpperCase()}
+                    </span>
+                </td>
+                <td>${r.ts}</td>
+                <td class="td-actions">
+                    <div style="display:flex; gap:6px; justify-content:flex-end;">
+                        <button class="adm-btn adm-btn-sm adm-btn-ghost" onclick="openDetail('${r.id}')" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        ${r.isPending
+                            ? `<button class="adm-btn adm-btn-sm adm-btn-approve" onclick="updateStatus('${r.id}', 'active')" title="Approve"><i class="fas fa-check"></i></button>`
+                            : `<button class="adm-btn adm-btn-sm adm-btn-reject" onclick="updateStatus('${r.id}', 'rejected')" title="Reject"><i class="fas fa-times"></i></button>`
+                        }
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
 
-        const data = filtered.map((e, index) => ({
+    // 5. Professional Excel Export (Upgraded)
+    window.exportToXL = () => {
+        const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
+        let rows = [...window.enrollmentsData];
+        // Apply current filters to export
+        if (window.currentAdminView === 'pending') rows = rows.filter(r => r.isPending);
+        if (window.currentAdminView === 'active')  rows = rows.filter(r => !r.isPending);
+        const f = window.currentAdminFilter;
+        if (f === 'pending')  rows = rows.filter(r => r.isPending && r.status !== 'rejected');
+        if (f === 'active')   rows = rows.filter(r => r.status === 'active' || r.status === 'Verified');
+        if (f === 'rejected') rows = rows.filter(r => r.status === 'rejected');
+        if (q) rows = rows.filter(r => r.fullName.toLowerCase().includes(q) || r.email.toLowerCase().includes(q));
+
+        if (!rows.length) { showToast('No data to export', 'error'); return; }
+
+        const data = rows.map((e, index) => ({
             '#': index + 1,
             'Name': e.fullName,
             'Email': e.email,
-            'WhatsApp': e.whatsapp || e.phone,
-            'Course': e.courseName || e.course,
-            'City': e.city || 'N/A',
-            'Payment Method': e.paymentMethod || 'N/A',
+            'WhatsApp': e.whatsapp,
+            'Course': e.course,
+            'City': e.city,
+            'Payment Method': e.paymentMethod,
             'Status': e.status.toUpperCase(),
-            'Date': e.submittedAt?.toDate().toLocaleDateString() || 'N/A'
+            'Date': e.ts
         }));
 
         const ws = XLSX.utils.json_to_sheet(data);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Enrollments");
         XLSX.writeFile(wb, `ZCP_Students_${new Date().toISOString().split('T')[0]}.xlsx`);
-        showToast('Sheet exported successfully!', 'success');
+        showToast('Excel Sheet exported successfully!', 'success');
     };
 
-    // 2. Bulk Status Update (Approve/Reject)
+    // 6. Bulk Status Update 
     window.handleBulkStatus = async (newStatus) => {
-        const filtered = enrollmentsData.filter(item => {
-            if (currentAdminFilter === 'all') return true;
-            if (currentAdminFilter === 'pending') return item.status === 'form_submitted' || item.status === 'payment_confirmed';
-            if (currentAdminFilter === 'active') return item.status === 'active';
-            if (currentAdminFilter === 'rejected') return item.status === 'rejected';
-            return true;
-        });
+        const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
+        let filtered = [...window.enrollmentsData];
+        if (window.currentAdminView === 'pending') filtered = filtered.filter(r => r.isPending);
+        if (window.currentAdminView === 'active')  filtered = filtered.filter(r => !r.isPending);
+        const f = window.currentAdminFilter;
+        if (f === 'pending')  filtered = filtered.filter(r => r.isPending && r.status !== 'rejected');
+        if (f === 'active')   filtered = filtered.filter(r => r.status === 'active' || r.status === 'Verified');
+        if (q) filtered = filtered.filter(r => r.fullName.toLowerCase().includes(q));
 
-        if (filtered.length === 0) {
-            showToast('No records selected for bulk update.', 'error');
-            return;
-        }
+        if (filtered.length === 0) { showToast('No records matched current search/filter.', 'error'); return; }
 
         if (!confirm(`Are you sure you want to set status to ${newStatus.toUpperCase()} for all ${filtered.length} visible records?`)) return;
-
-        const btn = document.querySelector(`button[onclick="handleBulkStatus('${newStatus}')"]`);
-        const origText = btn ? btn.innerHTML : 'Processing...';
-        if (btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...'; btn.disabled = true; }
 
         try {
             const batch = db.batch();
@@ -1279,56 +1466,102 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (newStatus === 'active') {
                     updateObj.paymentStatus = 'verified';
                     if (!doc.rollNumber) {
-                        updateObj.rollNumber = 'ZCP-' + (2026) + '-' + (Math.floor(100+Math.random()*900));
+                        updateObj.rollNumber = 'ZCP-2026-' + (Math.floor(1000+Math.random()*9000));
                     }
                 }
                 batch.update(docRef, updateObj);
             });
 
             await batch.commit();
-            showToast(`Successfully updated ${filtered.length} records!`, 'success');
-            loadAdminData(); // Refresh table
+            showToast(`Successfully updated ${filtered.length} students!`, 'success');
+            loadAdminData();
         } catch (err) {
-            console.error(err);
-            showToast('Bulk update failed: ' + err.message, 'error');
-        } finally {
-            if (btn) { btn.innerHTML = origText; btn.disabled = false; }
+            showToast('Bulk update failed', 'error');
         }
     };
 
-    // 3. Bulk Delete (Double Confirmation)
+    // 7. Bulk Delete
     window.handleBulkDelete = async () => {
-        const filtered = enrollmentsData.filter(item => {
-            if (currentAdminFilter === 'all') return true;
-            if (currentAdminFilter === 'pending') return item.status === 'form_submitted' || item.status === 'payment_confirmed';
-            if (currentAdminFilter === 'active') return item.status === 'active';
-            if (currentAdminFilter === 'rejected') return item.status === 'rejected';
-            return true;
-        });
+        const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
+        let filtered = [...window.enrollmentsData];
+        if (window.currentAdminView === 'pending') filtered = filtered.filter(r => r.isPending);
+        if (q) filtered = filtered.filter(r => r.fullName.toLowerCase().includes(q));
 
         if (filtered.length === 0) return;
 
-        const pass = prompt(`⚠️ WARNING: You are about to DELETE ${filtered.length} records permanently.\n\nThis cannot be undone. Type "DELETE" to confirm:`);
+        const pass = prompt(`⚠️ WARNING: You are about to DELETE ${filtered.length} students permanently. Type "DELETE" to confirm:`);
         if (pass !== 'DELETE') return;
-
-        const btn = document.querySelector(`button[onclick="handleBulkDelete()"]`);
-        const origText = btn ? btn.innerHTML : 'Deleting...';
-        if (btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...'; btn.disabled = true; }
 
         try {
             const batch = db.batch();
-            filtered.forEach(doc => {
-                batch.delete(db.collection('enrollments').doc(doc.id));
-            });
+            filtered.forEach(doc => batch.delete(db.collection('enrollments').doc(doc.id)));
             await batch.commit();
             showToast(`Permanently deleted ${filtered.length} records.`, 'success');
             loadAdminData();
         } catch (err) {
-            console.error(err);
             showToast('Delete operation failed', 'error');
-        } finally {
-            if (btn) { btn.innerHTML = origText; btn.disabled = false; }
         }
     };
+
+    // 8. Individual Status Update
+    window.updateStatus = async (docId, newStatus) => {
+        try {
+            const data = { status: newStatus, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+            if (newStatus === 'active') {
+                const doc = await db.collection('enrollments').doc(docId).get();
+                if (doc.exists && !doc.data().rollNumber) {
+                    data.rollNumber = `ZCP-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+                }
+            }
+            await db.collection('enrollments').doc(docId).update(data);
+            showToast(`Status set to ${newStatus.toUpperCase()}`, 'success');
+            loadAdminData();
+            if (window.closeModal) window.closeModal();
+        } catch(err) {
+            showToast('Error: ' + err.message, 'error');
+        }
+    };
+
+    // 9. Course Management Logic
+    window.loadCourses = async () => {
+        try {
+            const snap = await db.collection('courses').orderBy('createdAt', 'desc').get();
+            window.allCourses = [];
+            snap.forEach(doc => window.allCourses.push({ id: doc.id, ...doc.data() }));
+            renderCoursesTable();
+        } catch(err) {
+            console.error('Error loading courses:', err);
+        }
+    };
+
+    function renderCoursesTable() {
+        const grid = document.getElementById('coursesCardsGrid');
+        if (!grid) return;
+        if (!window.allCourses.length) {
+            grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:4rem; opacity:0.5;"><i class="fas fa-rocket fa-2x" style="color:var(--amber); margin-bottom:1rem;"></i><p>No batches found.</p></div>`;
+            return;
+        }
+        const statusColor = { live: '#4ade80', draft: 'var(--amber)', closed: '#f87171' };
+        grid.innerHTML = window.allCourses.map(c => `
+            <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:18px; overflow:hidden;">
+                <div style="height:160px; background:var(--bg-surface); position:relative;">
+                    ${c.imageUrl ? `<img src="${c.imageUrl}" style="width:100%; height:100%; object-fit:cover;">` : ''}
+                    <div style="position:absolute; top:12px; right:12px; background:rgba(0,0,0,0.7); color:${statusColor[c.status]}; padding:4px 10px; border-radius:100px; font-size:0.7rem; font-weight:700;">
+                        ${c.status.toUpperCase()}
+                    </div>
+                </div>
+                <div style="padding:1.5rem;">
+                    <div style="font-weight:700; color:white; margin-bottom:0.5rem;">${c.title}</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem;">
+                        <span style="color:var(--amber); font-weight:700;">Rs ${c.price}</span>
+                        <div style="display:flex; gap:6px;">
+                            <button class="adm-btn adm-btn-sm adm-btn-ghost" onclick="editCourse('${c.id}')"><i class="fas fa-edit"></i></button>
+                            <button class="adm-btn adm-btn-sm adm-btn-primary" onclick="openContentModal('${c.id}')"><i class="fas fa-folder"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
 });
 
