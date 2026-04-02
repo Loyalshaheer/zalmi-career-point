@@ -2,14 +2,10 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper: Check if the user is an authorized admin (v5 unified)
+    // Helper: Check if the user is the sole authorized admin (v5 simplified)
     function isAdmin() {
-      return request.auth != null && (
-        request.auth.token.email == 'loyalshaheer05@gmail.com' ||
-        request.auth.token.email == 'khan@gmail.com' ||
-        request.auth.token.email == 'shaheer@zalmicareer.com' ||
-        request.auth.token.email == 'admin@zalmicareer.com'
-      );
+      return request.auth != null && 
+             request.auth.token.email == 'loyalshaheer05@gmail.com';
     }
 
     // ── Site Configuration (v5) ──

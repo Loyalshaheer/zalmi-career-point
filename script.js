@@ -1,6 +1,6 @@
-// Admin emails — sole access to Admin Console (v5 unified)
+// Admin emails — sole access to Admin Console (v5 simplified)
 const ADMIN_EMAILS = [
-    'loyalshaheer05@gmail.com', 'khan@gmail.com', 'shaheer@zalmicareer.com', 'admin@zalmicareer.com'
+    'loyalshaheer05@gmail.com'
 ];
 window.ADMIN_EMAILS = ADMIN_EMAILS;
 
