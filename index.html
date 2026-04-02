@@ -903,6 +903,25 @@
 
     </main>
 
+    <!-- ─── LATEST UPDATES (v5 Command Center) ─── -->
+    <section id="news" class="pd-section" style="background:var(--bg-surface);">
+        <div class="container">
+            <div class="text-center" data-reveal="fade-up">
+                <div class="pd-section-label">Command Center</div>
+                <h2 class="pd-section-title">Latest & Greatest</h2>
+                <p class="pd-section-sub centered">Stay updated with our newest successes, batch announcements, and AI breakthroughs.</p>
+            </div>
+            
+            <div id="latestNewsGrid" class="pd-bento-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 3rem;">
+                <!-- Loading State (Replaced by JS) -->
+                <div style="text-align:center; opacity:0.5; grid-column:1/-1;">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p style="margin-top:1rem;">Pulling latest updates...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- ─── FOOTER ─── -->
     <footer class="pd-footer">
         <div class="container">
@@ -920,8 +939,8 @@
                 <div>
                     <div class="pd-footer-heading">Get in Touch</div>
                     <div class="pd-social-links">
-                        <a href="https://wa.me/923334747734" target="_blank" class="pd-social-btn" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-                        <a href="tel:+923334747734" class="pd-social-btn" title="Call"><i class="fas fa-phone-alt"></i></a>
+                        <a href="https://wa.me/923334747734" target="_blank" class="pd-social-btn" title="Information"><i class="fab fa-whatsapp"></i></a>
+                        <a href="tel:+923334747734" class="pd-social-btn" title="Call Center"><i class="fas fa-phone-alt"></i></a>
                     </div>
                 </div>
             </div>
@@ -936,8 +955,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
     <script src="script.js"></script>
-</body>
-</html>
+    <script>
+        // Tab switching logic for Journey
         document.querySelectorAll('.pd-method-card').forEach(card => {
             card.addEventListener('click', () => {
                 document.querySelectorAll('.pd-method-card').forEach(c => c.classList.remove('active'));

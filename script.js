@@ -1627,7 +1627,8 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Site settings updated!', 'success');
             fetchSiteConfig();
         } catch (err) {
-            showToast('Failed to update config', 'error');
+            console.error('Config update failure:', err);
+            showToast(`Failed to update: ${err.message}`, 'error');
         }
     };
 
@@ -1677,7 +1678,8 @@ document.addEventListener('DOMContentLoaded', () => {
             loadPosts();
             if (window.closeModal) window.closeModal();
         } catch (err) {
-            showToast('Failed to post', 'error');
+            console.error('Post creation failure:', err);
+            showToast(`Failed to post: ${err.message}`, 'error');
         }
     };
 

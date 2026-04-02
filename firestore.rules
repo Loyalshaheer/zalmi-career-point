@@ -2,9 +2,26 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper: Check if the user is the admin
+    // Helper: Check if the user is an authorized admin (v5 unified)
     function isAdmin() {
-      return request.auth != null && request.auth.token.email == 'loyalshaheer05@gmail.com';
+      return request.auth != null && (
+        request.auth.token.email == 'loyalshaheer05@gmail.com' ||
+        request.auth.token.email == 'khan@gmail.com' ||
+        request.auth.token.email == 'shaheer@zalmicareer.com' ||
+        request.auth.token.email == 'admin@zalmicareer.com'
+      );
+    }
+
+    // ── Site Configuration (v5) ──
+    match /site_config/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ── News & Posts (v5) ──
+    match /posts/{postId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     // ── Enrollments ──
