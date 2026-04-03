@@ -1,9 +1,14 @@
-// Admin emails — sole access to Admin Console (v5 simplified)
-const ADMIN_EMAILS = [
-    'loyalshaheer05@gmail.com'
-];
-window.ADMIN_EMAILS = ADMIN_EMAILS;
+// Admin access verification (v6 secure)
+const ADMIN_UIDS = ['CNC3AYuNSMgNyOXOtqfnTeGqmw53'];
+const ADMIN_EMAILS = ['loyalshaheer05@gmail.com'];
 
+window.isAdmin = function(user) {
+    if (!user) return false;
+    if (ADMIN_UIDS.includes(user.uid)) return true;
+    if (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase())) return true;
+    return false;
+};
+window.ADMIN_EMAILS = ADMIN_EMAILS;
 document.addEventListener('DOMContentLoaded', () => {
 
     // ============================================================
@@ -483,7 +488,7 @@ document.addEventListener('DOMContentLoaded', () => {
             initDashboardNav();
             
             // Check for admin
-            if (ADMIN_EMAILS.includes(user.email)) {
+            if (window.isAdmin(user)) {
                 const adminTab = document.getElementById('admin-portal-tab');
                 if (adminTab) adminTab.style.display = 'flex';
             }
@@ -491,7 +496,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Initialize Admin Page View
         if (window.location.pathname.includes('admin.html')) {
-            if (!ADMIN_EMAILS.includes(user.email)) { window.location.href = 'dashboard.html'; return; }
+            if (!window.isAdmin(user)) { window.location.href = 'dashboard.html'; return; }
             loadAdminData();
         }
     });

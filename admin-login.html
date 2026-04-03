@@ -369,10 +369,16 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
-        // ── ADMIN EMAILS WHITELIST (v5 simplified) ──
-        const ADMIN_EMAILS = [
-            'loyalshaheer05@gmail.com'
-        ];
+        // ── ADMIN UID WHITELIST (v6 secure) ──
+        const ADMIN_UIDS = ['CNC3AYuNSMgNyOXOtqfnTeGqmw53'];
+        const ADMIN_EMAILS = ['loyalshaheer05@gmail.com'];
+
+        function isAdmin(user) {
+            if (!user) return false;
+            if (ADMIN_UIDS.includes(user.uid)) return true;
+            if (user.email && ADMIN_EMAILS.includes(user.email.toLowerCase())) return true;
+            return false;
+        }
 
         // ── DOM ELEMENTS ──
         const form       = document.getElementById('adminLoginForm');
@@ -403,7 +409,7 @@
 
         // If already logged in as admin, go straight to admin console
         auth.onAuthStateChanged(user => {
-            if (user && ADMIN_EMAILS.includes(user.email)) {
+            if (isAdmin(user)) {
                 window.location.href = 'admin.html';
             }
         });
@@ -426,8 +432,8 @@
             try {
                 const { user } = await auth.signInWithEmailAndPassword(email, password);
 
-                // ─ CRITICAL: Check if this email is on the admin whitelist ─
-                if (!ADMIN_EMAILS.includes(user.email)) {
+                // ─ CRITICAL: Check if this email or UID is on the admin whitelist ─
+                if (!isAdmin(user)) {
                     // Not an admin — sign them out immediately
                     await auth.signOut();
                     showError('Access denied. This portal is for admin team only.');
